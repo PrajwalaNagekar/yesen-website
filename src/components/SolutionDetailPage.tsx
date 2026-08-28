@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Gauge, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Gauge, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { SiteFooter } from "@/components/SiteChrome";
@@ -242,7 +242,16 @@ export function SolutionDetailPage({ data }: { data: SolutionDetail }) {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <MarineInquiryDrawer solution={data.title} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  to="/enquire"
+                  search={{ solution: data.title, type: "solution" }}
+                  className="me-btn me-btn-primary inline-flex items-center gap-2"
+                >
+                  Enquire now <ArrowRight size={15} />
+                </Link>
+                <MarineInquiryDrawer solution={data.title} triggerClassName="me-btn me-btn-ghost" triggerLabel="Quick drawer" />
+              </div>
             </Reveal>
           </div>
         </section>

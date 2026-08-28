@@ -1,45 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
 import {
-  Activity,
   ArrowRight,
-  BadgeCheck,
-  BatteryCharging,
-  Bell,
-  Bluetooth,
-  Cable,
-  CircuitBoard,
-  Cloud,
+  Check,
   Cpu,
-  Gauge,
-  LayoutDashboard,
-  LineChart,
   Leaf,
-  Nfc,
+  LineChart,
   Recycle,
-  Ship,
   ShieldCheck,
-  Smartphone,
-  Sun,
-  Thermometer,
+  Sparkles,
   Timer,
   Volume2,
   Waves,
-  Wifi,
   Wrench,
-  Zap,
 } from "lucide-react";
 import { useRef } from "react";
 
+import { fetchProducts, resolveMediaUrl, type Product } from "@/api/products";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 import heroVideo from "@/assets/products-hero-v3.mp4.asset.json";
-import shotEmarine from "@/assets/emarine-decarbonize.jpg";
-import shotBkool from "@/assets/product-bkool.jpg";
-import shotMcontrol from "@/assets/product-mcontrol.jpg";
-import shotBguard from "@/assets/product-bguard.jpg";
+
+const ACCENTS = ["blue", "leaf", "indigo", "amber"] as const;
+
+function padNo(serialNo: number) {
+  return String(serialNo).padStart(2, "0");
+}
 
 export const Route = createFileRoute("/products/")({
+  loader: async () => {
+    try {
+      const products = await fetchProducts();
+      return { products, error: null as string | null };
+    } catch (err) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "Failed to load products";
+      return { products: [] as Product[], error: message };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Products | YESEN Technologies Pvt Ltd — Marine Electrification Systems" },
@@ -94,87 +94,6 @@ function Reveal({
 
 /* -------------------------------------------------------------------------- */
 
-const PRODUCTS = [
-  {
-    no: "01",
-    name: "E-MARINE",
-    tag: "Marine Electrification Platform",
-    body: "A complete marine electrification ecosystem designed for sustainable and intelligent marine transportation.",
-    image: shotEmarine,
-    accent: "blue" as const,
-    to: "/products/e-marine" as const,
-    columns: [
-      {
-        title: "Key Features",
-        items: [
-          { label: "Electric Propulsion", Icon: Zap },
-          { label: "Solar Integration", Icon: Sun },
-          { label: "Smart Monitoring", Icon: Activity },
-          { label: "Battery Management", Icon: BatteryCharging },
-          { label: "Energy Optimization", Icon: Gauge },
-        ],
-      },
-      {
-        title: "Benefits",
-        items: [
-          { label: "Zero Emissions", Icon: Leaf },
-          { label: "Reduced Maintenance", Icon: Wrench },
-          { label: "Lower Operating Costs", Icon: LineChart },
-          { label: "Silent Operation", Icon: Volume2 },
-          { label: "Higher Efficiency", Icon: Cpu },
-        ],
-      },
-    ],
-  },
-  {
-    no: "02",
-    name: "B-KOOL",
-    tag: "Marine Battery System",
-    body: "Advanced LFP battery systems engineered for marine applications with maximum safety, reliability and performance.",
-    image: shotBkool,
-    accent: "leaf" as const,
-    to: "/products/b-kool" as const,
-    chips: [
-      { label: "IRS Approved LFP", Icon: BadgeCheck },
-      { label: "Integrated BMS", Icon: CircuitBoard },
-      { label: "Wi-Fi Connectivity", Icon: Wifi },
-      { label: "Bluetooth Monitoring", Icon: Bluetooth },
-      { label: "CAN & Modbus", Icon: Cable },
-      { label: "Hot Swap Ready", Icon: Nfc },
-      { label: "Thermal Management", Icon: Thermometer },
-    ],
-  },
-  {
-    no: "03",
-    name: "M-CONTROL",
-    tag: "Smart Monitoring System",
-    body: "Intelligent platform for real-time monitoring, analytics and predictive maintenance of marine fleets.",
-    image: shotMcontrol,
-    accent: "indigo" as const,
-    chips: [
-      { label: "Real-time Monitoring", Icon: Activity },
-      { label: "Fleet Management", Icon: Ship },
-      { label: "Data Analytics", Icon: LineChart },
-      { label: "Predictive Maintenance", Icon: Wrench },
-      { label: "Mobile Access", Icon: Smartphone },
-      { label: "Cloud Integration", Icon: Cloud },
-    ],
-  },
-  {
-    no: "04",
-    name: "B-GUARD",
-    tag: "Marine Safety & Protection System",
-    body: "Intelligent protection and safety system integrated into the E-MARINE ecosystem.",
-    image: shotBguard,
-    accent: "amber" as const,
-    chips: [
-      { label: "Protection Systems", Icon: ShieldCheck },
-      { label: "Safety Monitoring", Icon: LayoutDashboard },
-      { label: "Intelligent Alerts", Icon: Bell },
-    ],
-  },
-];
-
 const CERTS = [
   {
     code: "IEC 62619",
@@ -197,14 +116,17 @@ const BENEFITS = [
   { label: "Intelligent Monitoring", Icon: Cpu },
 ];
 
-
 /* -------------------------------------------------------------------------- */
 
 function ProductsPage() {
+  const { products, error } = Route.useLoaderData();
   const heroRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "16%"]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1.04, 1.14]);
+  const countLabel = products.length
+    ? `${String(products.length).padStart(2, "0")} Systems / IEC Certified`
+    : "IEC Certified";
 
   return (
     <div className="about-page relative min-h-screen font-sans text-brand-navy antialiased">
@@ -245,7 +167,7 @@ function ProductsPage() {
                   <span className="inline-flex items-center gap-2 rounded-full border border-brand-navy/12 bg-white/70 px-4 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.3em] text-brand-forest shadow-[0_10px_30px_-20px_rgb(12_46_92/0.6)] backdrop-blur-xl">
                     <Waves size={13} className="about-float" /> Our Products
                   </span>
-                  <span className="pd-hero-meta text-brand-navy/45">04 Systems / IEC Certified</span>
+                  <span className="pd-hero-meta text-brand-navy/45">{countLabel}</span>
                 </div>
 
                 <h1 className="pd-hero-title display-xl mt-8 max-w-4xl text-[clamp(2.3rem,5vw,4.4rem)] leading-[1.06]">
@@ -266,76 +188,137 @@ function ProductsPage() {
                       Explore Products <ArrowRight size={16} />
                     </a>
                   </div>
-
                 </div>
               </Reveal>
             </div>
-
           </div>
         </section>
 
-
         {/* -------------------------------------------- PRODUCT CARDS */}
         <section id="catalogue" className="relative scroll-mt-16 px-6 py-10 sm:px-12 lg:py-12">
-          <div className="mx-auto grid w-full max-w-[100rem] gap-6 lg:grid-cols-2 lg:items-start">
-            {PRODUCTS.map((p, i) => (
-              <Reveal key={p.name} delay={(i % 2) * 0.08} from={i % 2 ? "right" : "left"}>
-                <article className={`about-card product-card product-${p.accent}`}>
+          <div className="mx-auto w-full max-w-[100rem]">
+            {error ? (
+              <Reveal>
+                <p className="rounded-2xl border border-brand-navy/10 bg-white/70 px-6 py-8 text-center text-sm text-brand-navy/70">
+                  {error}
+                </p>
+              </Reveal>
+            ) : products.length === 0 ? (
+              <Reveal>
+                <p className="rounded-2xl border border-brand-navy/10 bg-white/70 px-6 py-8 text-center text-sm text-brand-navy/70">
+                  Products will appear here once published in the CMS.
+                </p>
+              </Reveal>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+                {products.map((p, i) => {
+                  const accent = ACCENTS[i % ACCENTS.length];
+                  const imageUrl = resolveMediaUrl(p.image?.url);
+                  const hasBenefits = (p.benefits?.length ?? 0) > 0;
+                  const hasFeatures = (p.features?.length ?? 0) > 0;
 
-                  <div className="product-shot">
-                    <img decoding="async" src={p.image} alt={`${p.name} — ${p.tag}`} loading="lazy" />
-                  </div>
+                  return (
+                    <Reveal key={p._id} delay={(i % 2) * 0.08} from={i % 2 ? "right" : "left"}>
+                      <article className={`about-card product-card product-${accent}`}>
+                        {imageUrl ? (
+                          <div className="product-shot">
+                            <img
+                              decoding="async"
+                              src={imageUrl}
+                              alt={`${p.name} — ${p.label}`}
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : null}
 
-                  <span className="product-no">{p.no}</span>
-                  <h2 className="product-name">{p.name}</h2>
-                  <p className="mt-1 font-display text-lg text-brand-navy">{p.tag}</p>
-                  <p className="mt-3 max-w-md text-sm leading-relaxed text-brand-navy/65">{p.body}</p>
+                        <span className="product-no">{padNo(p.serialNo)}</span>
+                        <h2 className="product-name">{p.name}</h2>
+                        <p className="mt-1 font-display text-lg text-brand-navy">{p.label}</p>
+                        <p className="mt-3 max-w-md text-sm leading-relaxed text-brand-navy/65">
+                          {p.description1 || p.description2}
+                        </p>
 
-                  {p.columns && (
-                    <div className="mt-6 grid gap-6 border-t border-brand-navy/8 pt-6 sm:grid-cols-2">
-                      {p.columns.map((col) => (
-                        <div key={col.title}>
-                          <p className="product-col-title">{col.title}</p>
-                          <ul className="mt-3 space-y-2.5">
-                            {col.items.map(({ label, Icon }) => (
-                              <li key={label} className="flex items-center gap-2.5 text-sm text-brand-navy/75">
-                                <span className="product-bullet">
-                                  <Icon size={13} strokeWidth={1.7} />
+                        {hasBenefits && hasFeatures ? (
+                          <div className="mt-6 grid gap-6 border-t border-brand-navy/8 pt-6 sm:grid-cols-2">
+                            <div>
+                              <p className="product-col-title">Key Features</p>
+                              <ul className="mt-3 space-y-2.5">
+                                {p.features.map((label) => (
+                                  <li
+                                    key={label}
+                                    className="flex items-center gap-2.5 text-sm text-brand-navy/75"
+                                  >
+                                    <span className="product-bullet">
+                                      <Sparkles size={13} strokeWidth={1.7} />
+                                    </span>
+                                    {label}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="product-col-title">Benefits</p>
+                              <ul className="mt-3 space-y-2.5">
+                                {p.benefits.map((b, bi) => {
+                                  const label = b.title || b.heading || `Benefit ${bi + 1}`;
+                                  return (
+                                    <li
+                                      key={`${label}-${bi}`}
+                                      className="flex items-center gap-2.5 text-sm text-brand-navy/75"
+                                    >
+                                      <span className="product-bullet">
+                                        <Check size={13} strokeWidth={1.7} />
+                                      </span>
+                                      {label}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          </div>
+                        ) : hasFeatures ? (
+                          <div className="mt-6 grid gap-3 border-t border-brand-navy/8 pt-6 sm:grid-cols-3">
+                            {p.features.map((label) => (
+                              <div key={label} className="product-chip">
+                                <span className="product-chip-icon about-float">
+                                  <Sparkles size={15} strokeWidth={1.6} />
                                 </span>
                                 {label}
-                              </li>
+                              </div>
                             ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                          </div>
+                        ) : hasBenefits ? (
+                          <div className="mt-6 grid gap-3 border-t border-brand-navy/8 pt-6 sm:grid-cols-3">
+                            {p.benefits.map((b, bi) => {
+                              const label = b.title || b.heading || `Benefit ${bi + 1}`;
+                              return (
+                                <div key={`${label}-${bi}`} className="product-chip">
+                                  <span className="product-chip-icon about-float">
+                                    <Check size={15} strokeWidth={1.6} />
+                                  </span>
+                                  {label}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : null}
 
-                  {p.chips && (
-                    <div className="mt-6 grid gap-3 border-t border-brand-navy/8 pt-6 sm:grid-cols-3">
-                      {p.chips.map(({ label, Icon }) => (
-                        <div key={label} className="product-chip">
-                          <span className="product-chip-icon about-float">
-                            <Icon size={15} strokeWidth={1.6} />
-                          </span>
-                          {label}
+                        <div className="mt-8 flex flex-wrap items-center gap-4">
+                          <Link
+                            to="/products/$productId"
+                            params={{ productId: p._id }}
+                            className="product-link"
+                          >
+                            Learn More <ArrowRight size={14} />
+                          </Link>
+                       
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {"to" in p && p.to ? (
-                    <Link to={p.to} className="product-link">
-                      Learn More <ArrowRight size={14} />
-                    </Link>
-                  ) : (
-                    <span className="product-link">
-                      Learn More <ArrowRight size={14} />
-                    </span>
-                  )}
-                </article>
-              </Reveal>
-            ))}
+                      </article>
+                    </Reveal>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -344,7 +327,9 @@ function ProductsPage() {
           <Reveal className="mx-auto w-full max-w-[100rem]">
             <div className="about-card grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div className="flex items-start gap-4">
-                <span className="product-no shrink-0">05</span>
+                <span className="product-no shrink-0">
+                  {products.length ? padNo(products.length + 1) : "05"}
+                </span>
                 <div>
                   <h2 className="font-display text-2xl">IEC Certified Technology</h2>
                   <p className="mt-2 max-w-sm text-sm leading-relaxed text-brand-navy/65">
@@ -393,7 +378,6 @@ function ProductsPage() {
             </div>
           </div>
         </section>
-
       </main>
 
       <SiteFooter />

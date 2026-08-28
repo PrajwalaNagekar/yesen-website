@@ -6126,7 +6126,7 @@ html.perf-lite .about-hero-gl {
   height: 0.35rem;
   width: 0.35rem;
   flex: none;
-  border-radius: 999px;
+  border-radius: 0.05rem;
   background: var(--brand-forest, oklch(0.42 0.09 160));
 }
 

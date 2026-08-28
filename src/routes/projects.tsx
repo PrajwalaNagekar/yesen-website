@@ -3,7 +3,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, CalendarClock, Cpu, MapPin } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
-import { PROJECT_LOG, STATUS_DOT, STATUS_STYLES, type ProjectStatus } from "@/lib/projects-log";
+import { fetchProjects, type ProjectRecord } from "@/api/projects";
+import { STATUS_DOT, STATUS_STYLES, type ProjectStatus } from "@/lib/projects-log";
 
 import { ProjectInquiryDrawer } from "@/components/ProjectInquiryDrawer";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
@@ -12,6 +13,18 @@ import heroFerry from "@/assets/hero-eferry-clean.jpg";
 import pjHeroVideo from "@/assets/projects-hero.mp4.asset.json";
 
 export const Route = createFileRoute("/projects")({
+  loader: async () => {
+    try {
+      const { projects } = await fetchProjects({ limit: 100 });
+      return { projects, error: null as string | null };
+    } catch (err) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "Failed to load projects";
+      return { projects: [] as ProjectRecord[], error: message };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Projects | YESEN Technologies Pvt Ltd — Real Projects, Real Impact" },
@@ -123,6 +136,7 @@ function SectionHead({
 
 
 function ProjectsPage() {
+  const { projects, error } = Route.useLoaderData();
   const heroRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
@@ -215,7 +229,7 @@ function ProjectsPage() {
         </section>
 
         {/* -------------------------------------------------- PROJECT LOG */}
-        <ProjectLogSection />
+        <ProjectLogSection projects={projects} error={error} />
 
 
         {/* --------------------------------------------- EXECUTION ROUTE */}
@@ -354,13 +368,20 @@ const FILTERS = [
   { key: "all", label: "All projects" },
   { key: "complete", label: "Complete" },
   { key: "progress", label: "In progress" },
+  { key: "live", label: "Live" },
 ] as const;
 
-function ProjectLogSection() {
+function ProjectLogSection({
+  projects,
+  error,
+}: {
+  projects: ProjectRecord[];
+  error: string | null;
+}) {
   const [filter, setFilter] = useState<"all" | ProjectStatus>("all");
   const visible = useMemo(
-    () => PROJECT_LOG.filter((p) => filter === "all" || p.status === filter),
-    [filter],
+    () => projects.filter((p) => filter === "all" || p.status === filter),
+    [filter, projects],
   );
 
   return (
@@ -388,63 +409,76 @@ function ProjectLogSection() {
         ))}
       </div>
 
-      <div className="mx-auto mt-8 grid w-full max-w-[84rem] gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((p, i) => (
-          <Reveal key={p.id} delay={Math.min(i, 6) * 0.05}>
-            <Link
-              to="/projects/$projectId"
-              params={{ projectId: p.id }}
-              className="group flex h-full flex-col overflow-hidden rounded-md border border-brand-navy/12 bg-white/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(11,42,74,0.10)]"
-            >
-              <div className="relative h-40 overflow-hidden">
-                <img
-                  src={p.cover}
-                  alt={p.title}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
-                />
-                <span className="absolute inset-0 bg-gradient-to-t from-brand-navy/70 via-brand-navy/0 to-transparent" />
-                <span className="absolute bottom-3 left-3 font-mono text-[0.66rem] tracking-[0.2em] text-brand-ivory">
-                  {p.id}
-                </span>
-              </div>
-
-              <div className="flex flex-1 flex-col p-4">
-                <h3 className="font-display text-[1.02rem] leading-snug text-brand-navy">
-                  {p.title}
-                </h3>
-                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.64rem] uppercase tracking-[0.16em] text-brand-navy/55">
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin size={11} strokeWidth={2} /> {p.country}
-                  </span>
-                  <span className="text-brand-navy/25">/</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CalendarClock size={11} strokeWidth={2} /> {p.timeline}
-                  </span>
-                </p>
-                <p className="mt-2 flex items-start gap-1.5 text-left text-[0.78rem] leading-snug text-brand-navy/70">
-                  <Cpu size={12} strokeWidth={2} className="mt-[0.15rem] shrink-0 text-brand-blue" />
-                  {p.technology}
-                </p>
-
-
-                <div className="mt-auto flex items-center justify-between pt-4">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 font-mono text-[0.6rem] uppercase tracking-[0.16em] ${STATUS_STYLES[p.status]}`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[p.status]}`} />
-                    {p.statusLabel}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-brand-blue transition-colors group-hover:text-brand-forest">
-                    Open file <ArrowRight size={13} />
+      {error ? (
+        <p className="mx-auto mt-8 max-w-[84rem] rounded-md border border-brand-navy/12 bg-white/80 px-5 py-6 text-center text-sm text-brand-navy/70">
+          {error}
+        </p>
+      ) : visible.length === 0 ? (
+        <p className="mx-auto mt-8 max-w-[84rem] rounded-md border border-brand-navy/12 bg-white/80 px-5 py-6 text-center text-sm text-brand-navy/70">
+          {projects.length === 0
+            ? "Projects will appear here once published in the CMS."
+            : "No projects match this filter."}
+        </p>
+      ) : (
+        <div className="mx-auto mt-8 grid w-full max-w-[84rem] gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((p, i) => (
+            <Reveal key={p.id} delay={Math.min(i, 6) * 0.05}>
+              <Link
+                to="/projects/$projectId"
+                params={{ projectId: p.id }}
+                className="group flex h-full flex-col overflow-hidden rounded-md border border-brand-navy/12 bg-white/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(11,42,74,0.10)]"
+              >
+                <div className="relative h-40 overflow-hidden bg-brand-navy/5">
+                  {p.cover ? (
+                    <img
+                      src={p.cover}
+                      alt={p.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                    />
+                  ) : null}
+                  <span className="absolute inset-0 bg-gradient-to-t from-brand-navy/70 via-brand-navy/0 to-transparent" />
+                  <span className="absolute bottom-3 left-3 font-mono text-[0.66rem] tracking-[0.2em] text-brand-ivory">
+                    {String(i + 1).padStart(3, "0")}
                   </span>
                 </div>
-              </div>
-            </Link>
-          </Reveal>
-        ))}
-      </div>
+
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="font-display text-[1.02rem] leading-snug text-brand-navy">
+                    {p.title}
+                  </h3>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.64rem] uppercase tracking-[0.16em] text-brand-navy/55">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin size={11} strokeWidth={2} /> {p.country}
+                    </span>
+                    <span className="text-brand-navy/25">/</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarClock size={11} strokeWidth={2} /> {p.timeline}
+                    </span>
+                  </p>
+                  <p className="mt-2 flex items-start gap-1.5 text-left text-[0.78rem] leading-snug text-brand-navy/70">
+                    <Cpu size={12} strokeWidth={2} className="mt-[0.15rem] shrink-0 text-brand-blue" />
+                    {p.technology}
+                  </p>
+
+                  <div className="mt-auto flex items-center justify-between pt-4">
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 font-mono text-[0.6rem] uppercase tracking-[0.16em] ${STATUS_STYLES[p.status]}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[p.status]}`} />
+                      {p.statusLabel}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-brand-blue transition-colors group-hover:text-brand-forest">
+                      Open file <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
