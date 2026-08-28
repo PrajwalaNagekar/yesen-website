@@ -21,9 +21,11 @@ import { Route as SolutionsRouteImport } from './routes/solutions'
 import { Route as BrandsVSunRouteImport } from './routes/brands.v-sun'
 import { Route as BrandsYesenTechnologiesRouteImport } from './routes/brands.yesen-technologies'
 import { Route as ProductsIndexRouteImport } from './routes/products.index'
+import { Route as ProductsProductIdRouteImport } from './routes/products.$productId'
 import { Route as ProductsBKoolRouteImport } from './routes/products.b-kool'
 import { Route as ProductsEMarineRouteImport } from './routes/products.e-marine'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects_.$projectId'
+import { Route as SolutionsSolutionIdRouteImport } from './routes/solutions_.$solutionId'
 import { Route as SolutionsMarineElectrificationRouteImport } from './routes/solutions_.marine-electrification'
 import { Route as SolutionsShoreInfrastructureRouteImport } from './routes/solutions_.shore-infrastructure'
 import { Route as SolutionsSmartConnectedMarineSystemsRouteImport } from './routes/solutions_.smart-connected-marine-systems'
@@ -91,6 +93,11 @@ const ProductsIndexRoute = ProductsIndexRouteImport.update({
   path: '/products/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsProductIdRoute = ProductsProductIdRouteImport.update({
+  id: '/products/$productId',
+  path: '/products/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsBKoolRoute = ProductsBKoolRouteImport.update({
   id: '/products/b-kool',
   path: '/products/b-kool',
@@ -104,6 +111,11 @@ const ProductsEMarineRoute = ProductsEMarineRouteImport.update({
 const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
   id: '/projects_/$projectId',
   path: '/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolutionsSolutionIdRoute = SolutionsSolutionIdRouteImport.update({
+  id: '/solutions_/$solutionId',
+  path: '/solutions/$solutionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SolutionsMarineElectrificationRoute =
@@ -155,9 +167,11 @@ export interface FileRoutesByFullPath {
   '/solutions': typeof SolutionsRoute
   '/brands/v-sun': typeof BrandsVSunRoute
   '/brands/yesen-technologies': typeof BrandsYesenTechnologiesRoute
+  '/products/$productId': typeof ProductsProductIdRoute
   '/products/b-kool': typeof ProductsBKoolRoute
   '/products/e-marine': typeof ProductsEMarineRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/solutions/$solutionId': typeof SolutionsSolutionIdRoute
   '/solutions/marine-electrification': typeof SolutionsMarineElectrificationRoute
   '/solutions/shore-infrastructure': typeof SolutionsShoreInfrastructureRoute
   '/solutions/smart-connected-marine-systems': typeof SolutionsSmartConnectedMarineSystemsRoute
@@ -178,9 +192,11 @@ export interface FileRoutesByTo {
   '/solutions': typeof SolutionsRoute
   '/brands/v-sun': typeof BrandsVSunRoute
   '/brands/yesen-technologies': typeof BrandsYesenTechnologiesRoute
+  '/products/$productId': typeof ProductsProductIdRoute
   '/products/b-kool': typeof ProductsBKoolRoute
   '/products/e-marine': typeof ProductsEMarineRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
+  '/solutions/$solutionId': typeof SolutionsSolutionIdRoute
   '/solutions/marine-electrification': typeof SolutionsMarineElectrificationRoute
   '/solutions/shore-infrastructure': typeof SolutionsShoreInfrastructureRoute
   '/solutions/smart-connected-marine-systems': typeof SolutionsSmartConnectedMarineSystemsRoute
@@ -202,9 +218,11 @@ export interface FileRoutesById {
   '/solutions': typeof SolutionsRoute
   '/brands/v-sun': typeof BrandsVSunRoute
   '/brands/yesen-technologies': typeof BrandsYesenTechnologiesRoute
+  '/products/$productId': typeof ProductsProductIdRoute
   '/products/b-kool': typeof ProductsBKoolRoute
   '/products/e-marine': typeof ProductsEMarineRoute
   '/projects_/$projectId': typeof ProjectsProjectIdRoute
+  '/solutions_/$solutionId': typeof SolutionsSolutionIdRoute
   '/solutions_/marine-electrification': typeof SolutionsMarineElectrificationRoute
   '/solutions_/shore-infrastructure': typeof SolutionsShoreInfrastructureRoute
   '/solutions_/smart-connected-marine-systems': typeof SolutionsSmartConnectedMarineSystemsRoute
@@ -227,9 +245,11 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/brands/v-sun'
     | '/brands/yesen-technologies'
+    | '/products/$productId'
     | '/products/b-kool'
     | '/products/e-marine'
     | '/projects/$projectId'
+    | '/solutions/$solutionId'
     | '/solutions/marine-electrification'
     | '/solutions/shore-infrastructure'
     | '/solutions/smart-connected-marine-systems'
@@ -250,9 +270,11 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/brands/v-sun'
     | '/brands/yesen-technologies'
+    | '/products/$productId'
     | '/products/b-kool'
     | '/products/e-marine'
     | '/projects/$projectId'
+    | '/solutions/$solutionId'
     | '/solutions/marine-electrification'
     | '/solutions/shore-infrastructure'
     | '/solutions/smart-connected-marine-systems'
@@ -273,9 +295,11 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/brands/v-sun'
     | '/brands/yesen-technologies'
+    | '/products/$productId'
     | '/products/b-kool'
     | '/products/e-marine'
     | '/projects_/$projectId'
+    | '/solutions_/$solutionId'
     | '/solutions_/marine-electrification'
     | '/solutions_/shore-infrastructure'
     | '/solutions_/smart-connected-marine-systems'
@@ -297,9 +321,11 @@ export interface RootRouteChildren {
   SolutionsRoute: typeof SolutionsRoute
   BrandsVSunRoute: typeof BrandsVSunRoute
   BrandsYesenTechnologiesRoute: typeof BrandsYesenTechnologiesRoute
+  ProductsProductIdRoute: typeof ProductsProductIdRoute
   ProductsBKoolRoute: typeof ProductsBKoolRoute
   ProductsEMarineRoute: typeof ProductsEMarineRoute
   ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
+  SolutionsSolutionIdRoute: typeof SolutionsSolutionIdRoute
   SolutionsMarineElectrificationRoute: typeof SolutionsMarineElectrificationRoute
   SolutionsShoreInfrastructureRoute: typeof SolutionsShoreInfrastructureRoute
   SolutionsSmartConnectedMarineSystemsRoute: typeof SolutionsSmartConnectedMarineSystemsRoute
@@ -395,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/$productId': {
+      id: '/products/$productId'
+      path: '/products/$productId'
+      fullPath: '/products/$productId'
+      preLoaderRoute: typeof ProductsProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products/b-kool': {
       id: '/products/b-kool'
       path: '/products/b-kool'
@@ -414,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/projects/$projectId'
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions_/$solutionId': {
+      id: '/solutions_/$solutionId'
+      path: '/solutions/$solutionId'
+      fullPath: '/solutions/$solutionId'
+      preLoaderRoute: typeof SolutionsSolutionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/solutions_/marine-electrification': {
@@ -473,9 +513,11 @@ const rootRouteChildren: RootRouteChildren = {
   SolutionsRoute: SolutionsRoute,
   BrandsVSunRoute: BrandsVSunRoute,
   BrandsYesenTechnologiesRoute: BrandsYesenTechnologiesRoute,
+  ProductsProductIdRoute: ProductsProductIdRoute,
   ProductsBKoolRoute: ProductsBKoolRoute,
   ProductsEMarineRoute: ProductsEMarineRoute,
   ProjectsProjectIdRoute: ProjectsProjectIdRoute,
+  SolutionsSolutionIdRoute: SolutionsSolutionIdRoute,
   SolutionsMarineElectrificationRoute: SolutionsMarineElectrificationRoute,
   SolutionsShoreInfrastructureRoute: SolutionsShoreInfrastructureRoute,
   SolutionsSmartConnectedMarineSystemsRoute:

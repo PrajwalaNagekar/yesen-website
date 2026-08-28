@@ -1,10 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Mail, MapPin, Phone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { submitProductEnquiry, submitServiceEnquiry, submitContactEnquiry } from "../api";
+import { fetchProducts, type Product } from "../api/products";
+import { fetchSolutions, type Solution } from "../api/solutions";
 
+
+export interface EnquireSearchParams {
+  type?: string;
+  interest?: string;
+  product?: string;
+  productId?: string;
+  solution?: string;
+  solutionId?: string;
+  choice?: string;
+}
 
 export const Route = createFileRoute("/enquire")({
+  validateSearch: (search: Record<string, unknown>): EnquireSearchParams => ({
+    type: typeof search.type === "string" ? search.type : undefined,
+    interest: typeof search.interest === "string" ? search.interest : undefined,
+    product: typeof search.product === "string" ? search.product : undefined,
+    productId: typeof search.productId === "string" ? search.productId : undefined,
+    solution: typeof search.solution === "string" ? search.solution : undefined,
+    solutionId: typeof search.solutionId === "string" ? search.solutionId : undefined,
+    choice: typeof search.choice === "string" ? search.choice : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Enquire | YESEN Technologies Pvt Ltd — Products & Marine Solutions" },
@@ -67,119 +89,6 @@ const VESSEL_TYPES = [
 const BUILD_MODES = ["Retrofit existing vessel", "New build", "Not decided yet"];
 const TIMELINES = ["Immediate", "1–3 months", "3–6 months", "6–12 months", "Exploring"];
 const BUDGETS = ["Not defined yet", "Under ₹25 L", "₹25 L – ₹1 Cr", "₹1 Cr – ₹5 Cr", "₹5 Cr +"];
-
-/* ---- selection-specific field sets (form grows with the dropdown) ---- */
-
-type SpecField =
-  | { kind: "text"; name: string; label: string; placeholder?: string }
-  | { kind: "select"; name: string; label: string; options: string[] }
-  | { kind: "chips"; name: string; label: string; options: string[] };
-
-const SPECS: Record<string, { title: string; fields: SpecField[] }> = {
-  "E-MARINE": {
-    title: "E-MARINE — propulsion requirements",
-    fields: [
-      { kind: "chips", name: "propulsionLayout", label: "Propulsion layout", options: ["Single motor", "Twin motor", "Pod drive", "Outboard", "Not sure"] },
-      { kind: "select", name: "powerRating", label: "Target motor power", options: ["Under 20 kW", "20–50 kW", "50–150 kW", "150–400 kW", "400 kW +", "Advise us"] },
-      { kind: "select", name: "batteryCapacity", label: "Battery capacity needed", options: ["Under 50 kWh", "50–150 kWh", "150–400 kWh", "400 kWh +", "Advise us"] },
-      { kind: "chips", name: "charging", label: "Charging access at berth", options: ["Single-phase", "Three-phase", "DC fast charge", "None yet"] },
-      { kind: "text", name: "cruiseSpeed", label: "Required cruise speed", placeholder: "e.g. 8 knots" },
-      { kind: "text", name: "rangePerCharge", label: "Range per charge", placeholder: "e.g. 60 km" },
-      { kind: "chips", name: "existingEngine", label: "Existing propulsion", options: ["Diesel inboard", "Diesel outboard", "Petrol", "Hybrid", "None / new build"] },
-      { kind: "select", name: "classSociety", label: "Certification / class", options: ["IRS", "Inland waterways authority", "DNV / Lloyd's", "Not applicable", "Not sure"] },
-    ],
-  },
-  "B-KOOL": {
-    title: "B-KOOL — cooling requirements",
-    fields: [
-      { kind: "chips", name: "packChemistry", label: "Battery chemistry", options: ["LFP", "NMC", "LTO", "Other / not sure"] },
-      { kind: "select", name: "packSize", label: "Pack size to cool", options: ["Under 50 kWh", "50–150 kWh", "150–400 kWh", "400 kWh +"] },
-      { kind: "chips", name: "coolingType", label: "Preferred cooling", options: ["Liquid cooled", "Air cooled", "Immersion", "Advise us"] },
-      { kind: "text", name: "ambientTemp", label: "Ambient temperature range", placeholder: "e.g. 28–38 °C" },
-      { kind: "text", name: "cRate", label: "Typical charge / discharge rate", placeholder: "e.g. 1C discharge, 0.5C charge" },
-      { kind: "chips", name: "installStage", label: "Installation stage", options: ["Design stage", "Pack already built", "Live vessel issue"] },
-    ],
-  },
-  "M-CONTROL": {
-    title: "M-CONTROL — control & telemetry requirements",
-    fields: [
-      { kind: "chips", name: "monitorScope", label: "What should be monitored", options: ["Battery / BMS", "Motor & drive", "Navigation", "Energy use", "Passenger systems"] },
-      { kind: "chips", name: "connectivity", label: "Connectivity available", options: ["4G / LTE", "Wi-Fi at berth", "Satellite", "Offline logging"] },
-      { kind: "select", name: "fleetSize", label: "Fleet size", options: ["1 vessel", "2–5 vessels", "6–20 vessels", "20 +"] },
-      { kind: "chips", name: "dashboards", label: "Dashboards needed", options: ["Onboard HMI", "Shore dashboard", "Mobile app", "API / data export"] },
-      { kind: "text", name: "integrations", label: "Existing systems to integrate", placeholder: "e.g. Victron, CANbus BMS" },
-    ],
-  },
-  "B-GUARD": {
-    title: "B-GUARD — safety & protection requirements",
-    fields: [
-      { kind: "chips", name: "protectionScope", label: "Protection scope", options: ["Thermal runaway", "Gas / smoke detection", "Fire suppression", "Isolation & shutdown"] },
-      { kind: "select", name: "guardPackSize", label: "Pack size to protect", options: ["Under 50 kWh", "50–150 kWh", "150–400 kWh", "400 kWh +"] },
-      { kind: "chips", name: "enclosure", label: "Battery enclosure", options: ["Below deck", "On deck", "Dedicated battery room", "Not decided"] },
-      { kind: "text", name: "complianceNeeds", label: "Compliance / survey requirement", placeholder: "e.g. IRS inland survey" },
-    ],
-  },
-  "Marine Electrification": {
-    title: "Marine Electrification — project scope",
-    fields: [
-      { kind: "chips", name: "fleetScope", label: "Scope", options: ["Single vessel", "Fleet pilot", "Full fleet transition", "Feasibility study"] },
-      { kind: "select", name: "elecPower", label: "Power requirement per vessel", options: ["Under 50 kW", "50–150 kW", "150–400 kW", "400 kW +", "Advise us"] },
-      { kind: "chips", name: "chargingPlan", label: "Charging plan", options: ["Shore charger at jetty", "Opportunity charging", "Battery swap", "To be designed"] },
-      { kind: "text", name: "dailyRange", label: "Daily distance covered", placeholder: "e.g. 90 km across 12 trips" },
-      { kind: "text", name: "fuelSpend", label: "Current monthly fuel spend", placeholder: "Optional" },
-    ],
-  },
-  "Solar Integration": {
-    title: "Solar Integration — site & array details",
-    fields: [
-      { kind: "chips", name: "solarSite", label: "Installation site", options: ["Vessel roof", "Canopy / awning", "Jetty / shore", "Floating array"] },
-      { kind: "text", name: "solarArea", label: "Available area", placeholder: "e.g. 40 m² roof" },
-      { kind: "select", name: "solarTarget", label: "Target array size", options: ["Under 5 kWp", "5–20 kWp", "20–100 kWp", "100 kWp +", "Advise us"] },
-      { kind: "chips", name: "storage", label: "Storage", options: ["With battery storage", "Grid-tied only", "Hybrid with genset", "Not sure"] },
-      { kind: "chips", name: "solarGoal", label: "Primary goal", options: ["Fuel savings", "Silent hotel load", "Off-grid operation", "Sustainability reporting"] },
-    ],
-  },
-  "Smart Connected Marine Systems": {
-    title: "Smart Connected Marine Systems — requirements",
-    fields: [
-      { kind: "chips", name: "smartScope", label: "Systems to connect", options: ["Propulsion & energy", "Navigation", "Passenger counting", "Ticketing", "CCTV / safety"] },
-      { kind: "select", name: "smartFleet", label: "Number of vessels", options: ["1", "2–5", "6–20", "20 +"] },
-      { kind: "chips", name: "smartOutputs", label: "Required outputs", options: ["Live dashboard", "Alerts & alarms", "Predictive maintenance", "Regulatory reports"] },
-      { kind: "text", name: "smartExisting", label: "Existing hardware / vendors", placeholder: "Optional" },
-    ],
-  },
-  "New Vessel Engineering & Construction": {
-    title: "New Vessel Engineering & Construction — brief",
-    fields: [
-      { kind: "chips", name: "buildStage", label: "Current stage", options: ["Concept only", "Concept design ready", "Detailed design ready", "Tender in progress"] },
-      { kind: "text", name: "paxCapacity", label: "Passenger / cargo capacity", placeholder: "e.g. 100 pax" },
-      { kind: "text", name: "hullLength", label: "Target length & beam", placeholder: "e.g. 18 m × 5 m" },
-      { kind: "chips", name: "hullMaterial", label: "Hull material", options: ["Aluminium", "Steel", "FRP / composite", "Advise us"] },
-      { kind: "chips", name: "buildScope", label: "Scope needed", options: ["Design only", "Design + build", "Build to our design", "Refit"] },
-      { kind: "select", name: "buildClass", label: "Class / registration", options: ["IRS", "State inland authority", "International class", "Not sure"] },
-    ],
-  },
-  "Tourism & Hospitality Solutions": {
-    title: "Tourism & Hospitality Solutions — experience brief",
-    fields: [
-      { kind: "chips", name: "propertyType", label: "Property / asset type", options: ["Houseboat", "Floating stay", "Day-cruise boat", "Resort jetty", "Other"] },
-      { kind: "text", name: "guestCount", label: "Guests per day / keys", placeholder: "e.g. 24 guests, 6 rooms" },
-      { kind: "chips", name: "hospitalityScope", label: "Scope", options: ["Silent electric cruising", "Solar + storage", "Interior & fit-out", "Guest tech & Wi-Fi"] },
-      { kind: "text", name: "location", label: "Destination / waterbody", placeholder: "e.g. Alappuzha backwaters" },
-      { kind: "chips", name: "season", label: "Operating pattern", options: ["Year round", "Seasonal peaks", "Charter only"] },
-    ],
-  },
-  "Shore Infrastructure Solutions": {
-    title: "Shore Infrastructure Solutions — site details",
-    fields: [
-      { kind: "chips", name: "shoreAsset", label: "Asset", options: ["Jetty / pontoon", "Charging station", "Terminal building", "Substation upgrade"] },
-      { kind: "select", name: "gridAvailable", label: "Grid capacity at site", options: ["Under 50 kVA", "50–150 kVA", "150–500 kVA", "500 kVA +", "Unknown"] },
-      { kind: "text", name: "vesselsServed", label: "Vessels to be served", placeholder: "e.g. 4 ferries per hour" },
-      { kind: "chips", name: "sitePermits", label: "Permits status", options: ["Approved", "In process", "Not started", "Not sure"] },
-      { kind: "text", name: "siteLocation", label: "Site location", placeholder: "e.g. Fort Kochi jetty" },
-    ],
-  },
-};
 
 /* ---------------- primitives ---------------- */
 
@@ -252,17 +161,55 @@ function StepLabel({ title }: { title: string }) {
 /* ---------------- page ---------------- */
 
 function EnquirePage() {
-  const [interest, setInterest] = useState<InterestKey>("product");
-  const [choice, setChoice] = useState("");
+  const search = Route.useSearch();
+
+  const [interest, setInterest] = useState<InterestKey>(() => {
+    const rawInterest = (search.interest || search.type)?.toLowerCase();
+    if (search.product || search.productId || rawInterest === "product") return "product";
+    if (search.solution || search.solutionId || rawInterest === "solution" || rawInterest === "service") return "solution";
+    if (rawInterest === "general" || rawInterest === "contact") return "general";
+    return "product";
+  });
+
+  const [choice, setChoice] = useState(() => {
+    return (
+      search.product ||
+      search.productId ||
+      search.solution ||
+      search.solutionId ||
+      search.choice ||
+      ""
+    );
+  });
+
   const [vessel, setVessel] = useState<string | null>(null);
   const [mode, setMode] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [specValues, setSpecValues] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailValue, setEmailValue] = useState("");
   const [phoneValue, setPhoneValue] = useState("");
+  const [productsList, setProductsList] = useState<Product[]>([]);
+  const [solutionsList, setSolutionsList] = useState<Solution[]>([]);
+
+  useEffect(() => {
+    fetchProducts()
+      .then((res) => {
+        if (Array.isArray(res) && res.length > 0) {
+          setProductsList(res);
+        }
+      })
+      .catch(() => {});
+
+    fetchSolutions()
+      .then((res) => {
+        if (Array.isArray(res) && res.length > 0) {
+          setSolutionsList(res);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const mapVesselType = (v: string | null): string | undefined => {
     if (!v) return undefined;
@@ -286,16 +233,143 @@ function EnquirePage() {
     return undefined;
   };
 
+  const productOptions = useMemo(() => {
+    if (productsList.length > 0) {
+      return productsList.map((p) => ({
+        id: p._id,
+        name: p.name,
+        display: p.label ? `${p.name} — ${p.label}` : p.name,
+      }));
+    }
+    return PRODUCTS.map((p) => ({
+      id: p.split(" — ")[0],
+      name: p.split(" — ")[0],
+      display: p,
+    }));
+  }, [productsList]);
 
-  const options = useMemo(
-    () => (interest === "product" ? PRODUCTS : interest === "solution" ? SOLUTIONS : []),
-    [interest],
-  );
+  const solutionOptions = useMemo(() => {
+    if (solutionsList.length > 0) {
+      return solutionsList.map((s) => ({
+        id: s._id,
+        name: s.name,
+        display: s.name,
+      }));
+    }
+    return SOLUTIONS.map((s) => ({
+      id: s,
+      name: s,
+      display: s,
+    }));
+  }, [solutionsList]);
 
-  const spec = useMemo(() => {
-    if (!choice) return null;
-    return SPECS[choice.split(" — ")[0]] ?? null;
-  }, [choice]);
+  useEffect(() => {
+    let targetProduct = search.product || search.productId;
+    let targetSolution = search.solution || search.solutionId;
+    let targetInterest = search.interest || search.type;
+    let targetChoice = search.choice;
+
+    if (!targetProduct && !targetSolution && !targetInterest && typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      targetProduct = urlParams.get("product") || urlParams.get("productId") || undefined;
+      targetSolution = urlParams.get("solution") || urlParams.get("solutionId") || undefined;
+      targetInterest = urlParams.get("interest") || urlParams.get("type") || undefined;
+      targetChoice = urlParams.get("choice") || undefined;
+    }
+
+    if (targetProduct) {
+      setInterest("product");
+      const matched = productOptions.find(
+        (p) =>
+          p.id.toLowerCase() === targetProduct.toLowerCase() ||
+          p.name.toLowerCase() === targetProduct.toLowerCase() ||
+          p.display.toLowerCase().includes(targetProduct.toLowerCase()) ||
+          targetProduct.toLowerCase().includes(p.name.toLowerCase())
+      );
+      if (matched) {
+        setChoice(matched.id);
+      } else {
+        setChoice(targetProduct);
+      }
+    } else if (targetSolution) {
+      setInterest("solution");
+      const matched = solutionOptions.find(
+        (s) =>
+          s.id.toLowerCase() === targetSolution.toLowerCase() ||
+          s.name.toLowerCase() === targetSolution.toLowerCase() ||
+          s.display.toLowerCase().includes(targetSolution.toLowerCase()) ||
+          targetSolution.toLowerCase().includes(s.name.toLowerCase())
+      );
+      if (matched) {
+        setChoice(matched.id);
+      } else {
+        setChoice(targetSolution);
+      }
+    } else if (targetInterest === "product") {
+      setInterest("product");
+      if (targetChoice) {
+        const matched = productOptions.find(
+          (p) =>
+            p.id.toLowerCase() === targetChoice.toLowerCase() ||
+            p.name.toLowerCase() === targetChoice.toLowerCase() ||
+            p.display.toLowerCase().includes(targetChoice.toLowerCase())
+        );
+        setChoice(matched ? matched.id : targetChoice);
+      }
+    } else if (targetInterest === "solution" || targetInterest === "service") {
+      setInterest("solution");
+      if (targetChoice) {
+        const matched = solutionOptions.find(
+          (s) =>
+            s.id.toLowerCase() === targetChoice.toLowerCase() ||
+            s.name.toLowerCase() === targetChoice.toLowerCase() ||
+            s.display.toLowerCase().includes(targetChoice.toLowerCase())
+        );
+        setChoice(matched ? matched.id : targetChoice);
+      }
+    } else if (targetInterest === "general" || targetInterest === "contact") {
+      setInterest("general");
+    }
+  }, [
+    search.product,
+    search.productId,
+    search.solution,
+    search.solutionId,
+    search.interest,
+    search.type,
+    search.choice,
+    productOptions,
+    solutionOptions,
+  ]);
+
+  const selectedOptionValue = useMemo(() => {
+    const list = interest === "product" ? productOptions : solutionOptions;
+    if (!choice) return "";
+    const matched = list.find(
+      (o) =>
+        o.id === choice ||
+        o.name.toLowerCase() === choice.toLowerCase() ||
+        o.display.toLowerCase() === choice.toLowerCase() ||
+        o.display.toLowerCase().includes(choice.toLowerCase())
+    );
+    return matched ? matched.id : choice;
+  }, [interest, choice, productOptions, solutionOptions]);
+
+  const selectedDisplay = useMemo(() => {
+    if (interest === "product") {
+      const found = productOptions.find(
+        (p) => p.id === choice || p.name === choice || p.display === choice
+      );
+      return found ? found.name : choice;
+    }
+    if (interest === "solution") {
+      const found = solutionOptions.find(
+        (s) => s.id === choice || s.name === choice || s.display === choice
+      );
+      return found ? found.name : choice;
+    }
+    return "";
+  }, [interest, choice, productOptions, solutionOptions]);
 
 
   return (
@@ -349,7 +423,7 @@ function EnquirePage() {
             <h2 className="mt-6 font-display text-2xl text-brand-navy">Quote request received</h2>
             <p className="mx-auto mt-3 max-w-[46ch] text-[0.9rem] leading-relaxed text-brand-navy/60">
               Thank you — our team will reply within 1–2 working days
-              {choice ? ` about ${choice.split(" — ")[0]}` : ""}.
+              {selectedDisplay ? ` about ${selectedDisplay}` : ""}.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
@@ -367,7 +441,6 @@ function EnquirePage() {
                   setVessel(null);
                   setMode(null);
                   setTimeline(null);
-                  setSpecValues({});
                   setSubmitError(null);
                   setEmailValue("");
                   setPhoneValue("");
@@ -395,7 +468,7 @@ function EnquirePage() {
                 const company = formData.get("company") as string;
                 const countryLocation = formData.get("location") as string;
 
-                // Build message field with budget and specifications embedded
+                // Build message field with budget embedded
                 let rawMessage = formData.get("message") as string || "";
                 let finalMessage = rawMessage.trim();
 
@@ -404,70 +477,67 @@ function EnquirePage() {
                   finalMessage += `\n\n[Budget]\n${budget}`;
                 }
 
-                if (countryLocation) {
-                  finalMessage += `\n\n[Location]\n${countryLocation}`;
-                }
-
-                if (spec && Object.keys(specValues).length > 0) {
-                  finalMessage += `\n\n[Specifications for ${spec.title}]\n`;
-                  spec.fields.forEach((field) => {
-                    const val = specValues[field.name];
-                    if (val) {
-                      finalMessage += `- ${field.label}: ${val}\n`;
-                    }
-                  });
-                }
-
-                // Extract productOrServiceName
-                const productOrServiceName = choice ? (choice.includes(" — ") ? choice.split(" — ")[0] : choice) : undefined;
-
-                // Normalize validated enums
-                const normalizedVesselType = mapVesselType(vessel);
-                const normalizedRetrofitStatus = mapRetrofitStatus(mode);
-
-                const payload: Record<string, any> = {
-                  clientName,
-                  name: clientName,
-                  email: email || undefined,
-                  phone: phone || undefined,
-                  company: company || undefined,
-                  message: finalMessage,
-                  sourcePage: "/enquire",
-                };
-
-                if (interest !== "general") {
-                  payload.productOrServiceName = productOrServiceName;
-                  payload.vesselType = normalizedVesselType;
-                  payload.retrofitStatus = normalizedRetrofitStatus;
-                  payload.vesselLength = formData.get("vesselSize") as string || undefined;
-                  payload.operatingArea = formData.get("route") as string || undefined;
-                  payload.dailyOperatingHours = formData.get("hours") as string || undefined;
-                  payload.timeLine = timeline || undefined;
-                }
-
-                let endpoint = "/contact";
-                if (interest === "product") {
-                  endpoint = "/product";
-                } else if (interest === "solution") {
-                  endpoint = "/service";
-                }
-
-                const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001/api/v1";
-                const formsKey = import.meta.env.VITE_FORMS_API_KEY || "change_this_forms_key_min_8_chars";
-
                 try {
-                  const response = await fetch(`${apiUrl}/forms${endpoint}`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "x-forms-key": formsKey,
-                    },
-                    body: JSON.stringify(payload),
-                  });
+                  if (interest === "general") {
+                    // General contact enquiry
+                    await submitContactEnquiry({
+                      clientName,
+                      name: clientName,
+                      email: email || undefined,
+                      phone: phone || undefined,
+                      company: company || undefined,
+                      location: countryLocation || undefined,
+                      subject: "General enquiry",
+                      message: finalMessage,
+                      sourcePage: "/enquire",
+                    });
+                  } else {
+                    // Normalize validated enums
+                    const normalizedVesselType = mapVesselType(vessel);
+                    const normalizedRetrofitStatus = mapRetrofitStatus(mode);
 
-                  if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.message || `Server responded with ${response.status}`);
+                    const basePayload = {
+                      clientName,
+                      name: clientName,
+                      email: email || undefined,
+                      phone: phone || undefined,
+                      company: company || undefined,
+                      location: countryLocation || undefined,
+                      message: finalMessage,
+                      sourcePage: "/enquire",
+                      vesselType: normalizedVesselType,
+                      retrofitStatus: normalizedRetrofitStatus,
+                      vesselLength: (formData.get("vesselSize") as string) || undefined,
+                      operatingArea: (formData.get("route") as string) || undefined,
+                      dailyOperatingHours: (formData.get("hours") as string) || undefined,
+                      timeLine: timeline || undefined,
+                    };
+
+                    if (interest === "product") {
+                      const matched = productOptions.find(
+                        (p) => p.id === choice || p.name === choice || p.display === choice
+                      );
+                      const productRef = matched?.id || (choice.includes(" — ") ? choice.split(" — ")[0] : choice);
+
+                      await submitProductEnquiry({
+                        ...basePayload,
+                        product: productRef,
+                        productName: matched?.name,
+                        productOrServiceName: matched?.name || productRef,
+                      });
+                    } else {
+                      const matched = solutionOptions.find(
+                        (s) => s.id === choice || s.name === choice || s.display === choice
+                      );
+                      const solutionRef = matched?.id || choice;
+
+                      await submitServiceEnquiry({
+                        ...basePayload,
+                        solution: solutionRef,
+                        solutionName: matched?.name,
+                        productOrServiceName: matched?.name || solutionRef,
+                      });
+                    }
                   }
 
                   setSent(true);
@@ -523,20 +593,19 @@ function EnquirePage() {
                   />
                   <select
                     className={inputCls}
-                    value={choice}
+                    value={selectedOptionValue}
                     disabled={isSubmitting}
                     onChange={(e) => {
                       setChoice(e.target.value);
-                      setSpecValues({});
                     }}
                     required
                   >
                     <option value="">
                       {interest === "product" ? "Choose a product…" : "Choose a solution…"}
                     </option>
-                    {options.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
+                    {(interest === "product" ? productOptions : solutionOptions).map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.display}
                       </option>
                     ))}
                   </select>
@@ -613,75 +682,6 @@ function EnquirePage() {
                       </legend>
                       <Chips options={TIMELINES} value={timeline} onChange={setTimeline} disabled={isSubmitting} />
                     </fieldset>
-
-
-                    {spec && (
-                      <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 rounded-[1.1rem] border border-brand-sky/25 bg-[color-mix(in_oklab,var(--brand-sky)_7%,white)] p-6 duration-500 sm:p-7">
-                        <div className="flex items-center gap-3">
-                          <span className="h-px flex-1 bg-brand-navy/10" />
-                          <span className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-brand-navy/55">
-                            {spec.title}
-                          </span>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {spec.fields.map((f) =>
-                            f.kind === "chips" ? (
-                              <fieldset
-                                key={f.name}
-                                className="border-0 p-0 sm:col-span-2"
-                              >
-                                <legend className="mb-3 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-brand-navy/50">
-                                  {f.label}
-                                </legend>
-                                <Chips
-                                  options={f.options}
-                                  value={specValues[f.name] ?? null}
-                                  disabled={isSubmitting}
-                                  onChange={(v) =>
-                                    setSpecValues((s) => ({ ...s, [f.name]: v }))
-                                  }
-                                />
-                              </fieldset>
-                            ) : f.kind === "select" ? (
-                              <Field key={f.name} label={f.label}>
-                                <select
-                                  className={inputCls}
-                                  name={f.name}
-                                  disabled={isSubmitting}
-                                  value={specValues[f.name] ?? ""}
-                                  onChange={(e) =>
-                                    setSpecValues((s) => ({ ...s, [f.name]: e.target.value }))
-                                  }
-                                >
-                                  <option value="">Select…</option>
-                                  {f.options.map((o) => (
-                                    <option key={o} value={o}>
-                                      {o}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            ) : (
-                              <Field key={f.name} label={f.label}>
-                                <input
-                                  className={inputCls}
-                                  name={f.name}
-                                  maxLength={120}
-                                  disabled={isSubmitting}
-                                  placeholder={f.placeholder}
-                                  value={specValues[f.name] ?? ""}
-                                  onChange={(e) =>
-                                    setSpecValues((s) => ({ ...s, [f.name]: e.target.value }))
-                                  }
-                                />
-                              </Field>
-                            ),
-                          )}
-
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
 

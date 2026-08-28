@@ -2,14 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
-  Building2,
   Check,
   CircuitBoard,
-  Cog,
-  FlaskConical,
   MapPin,
-  PenTool,
-  Rocket,
   Ship,
   Sun,
   Waves,
@@ -19,18 +14,10 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { fetchSolutions, solutionImageUrl, type Solution } from "@/api/solutions";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { EMarineInquiryDrawer } from "@/components/EMarineInquiryDrawer";
 import { useHydrated } from "@/hooks/use-hydrated";
-
-
-
-import shotElectrification from "@/assets/sol-electrification.jpg";
-import shotSolar from "@/assets/sol-solar.jpg";
-import shotSmart from "@/assets/sol-smart.jpg";
-import shotVessel from "@/assets/sol-vessel-build.jpg";
-import shotTourism from "@/assets/sol-tourism.jpg";
-import shotShore from "@/assets/sol-shore.jpg";
 
 import retrofitSunboat from "@/assets/retrofit-sunboat.png.asset.json";
 import sunBoatAsset from "@/assets/sunboat-ii.png.asset.json";
@@ -45,15 +32,27 @@ import cialVembanadFilm from "@/assets/cial-vembanad.mp4.asset.json";
 import shikaraFilm from "@/assets/shikara.mp4.asset.json";
 import ciftEnvironmentDay from "@/assets/cift-environment-day.mp4.asset.json";
 
-
-
-
 import locKerala from "@/assets/ongoing-houseboat.jpg";
 import locGuam from "@/assets/project-guam-2.jpg";
 import locAbu from "@/assets/project-carport.jpg";
 import locJharkhand from "@/assets/ongoing-patratu-dam.jpg";
 
+const TONES = ["teal", "leaf", "violet", "blue"] as const;
+const ICONS = [CircuitBoard, Sun, Workflow, Ship, Palmtree, Wrench] as const;
+
 export const Route = createFileRoute("/solutions")({
+  loader: async () => {
+    try {
+      const solutions = await fetchSolutions();
+      return { solutions, error: null as string | null };
+    } catch (err) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "Failed to load solutions";
+      return { solutions: [] as Solution[], error: message };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Solutions | YESEN Technologies Pvt Ltd — Sustainable Marine Solutions" },
@@ -109,18 +108,6 @@ function Reveal({
 
 /* -------------------------------------------------------------------------- */
 
-
-
-
-const ENGINEERING_STEPS = [
-  { label: "Design", Icon: PenTool },
-  { label: "Fabrication", Icon: Cog },
-  { label: "Integration", Icon: Workflow },
-  { label: "Testing", Icon: FlaskConical },
-  { label: "Launching", Icon: Rocket },
-  { label: "Commissioning", Icon: Building2 },
-];
-
 const LOCATIONS = [
   { place: "Kerala", country: "India", src: locKerala },
   { place: "Guam", country: "USA", src: locGuam },
@@ -139,12 +126,12 @@ function SolutionCard({
   Icon,
   tone,
   index,
-  href,
+  solutionId,
 }: {
   title: string;
   sub: string;
   items: string[];
-  href?: string;
+  solutionId?: string;
   image: string;
   Icon: typeof Sun;
   tone: "teal" | "blue" | "violet" | "leaf";
@@ -189,127 +176,31 @@ function SolutionCard({
             ))}
           </ul>
 
-          {href && (
-            <Link
-              to={href}
-              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white transition-colors hover:border-brand-sky hover:bg-white/5"
-            >
-              Learn more <ArrowRight size={13} />
-            </Link>
-          )}
+          {solutionId ? (
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/solutions/$solutionId"
+                params={{ solutionId }}
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white transition-colors hover:border-brand-sky hover:bg-white/5"
+              >
+                Learn more <ArrowRight size={13} />
+              </Link>
+           
+            </div>
+          ) : null}
         </div>
-
       </div>
 
       <div className="sol-big-media">
-        <img decoding="async" src={image} alt={title} loading="lazy" />
+        {image ? (
+          <img decoding="async" src={image} alt={title} loading="lazy" />
+        ) : null}
       </div>
     </article>
   );
 }
 
-
-
 /* -------------------------------------------------------------------------- */
-
-type SolutionItem = {
-  title: string;
-  sub: string;
-  items: string[];
-  href?: string;
-  image: string;
-  Icon: typeof Sun;
-  tone: "teal" | "blue" | "violet" | "leaf";
-};
-
-const SOLUTIONS: SolutionItem[] = [
-  {
-    tone: "teal",
-    Icon: CircuitBoard,
-    title: "Marine Electrification",
-    href: "/solutions/marine-electrification",
-    sub: "Powering the future with clean innovation",
-    image: shotElectrification,
-    items: [
-      "Electric propulsion systems",
-      "Advanced battery systems",
-      "Energy optimization",
-      "Zero emissions",
-      "Lower operating costs",
-      "Reduced noise & vibration",
-    ],
-  },
-  {
-    tone: "leaf",
-    Icon: Sun,
-    title: "Solar Integration",
-    href: "/solutions/solar-integration",
-    sub: "Harnessing the power of the sun",
-    image: shotSolar,
-    items: [
-      "Solar PV integration",
-      "Hybrid energy solutions",
-      "Smart energy management",
-      "Maximum efficiency",
-      "Sustainable operations",
-    ],
-  },
-  {
-    tone: "violet",
-    Icon: Workflow,
-    title: "Smart Connected Marine Systems",
-    href: "/solutions/smart-connected-marine-systems",
-    sub: "Intelligent systems for smarter operations",
-    image: shotSmart,
-    items: [
-      "Real-time monitoring",
-      "Predictive maintenance",
-      "Fleet management",
-      "Data analytics & insights",
-      "Web & mobile application",
-      "Cloud integration",
-    ],
-  },
-  {
-    tone: "blue",
-    Icon: Ship,
-    title: "New Vessel Engineering & Construction",
-    href: "/solutions/vessel-engineering-construction",
-    sub: "End-to-end solutions for new age vessels",
-    image: shotVessel,
-    items: ENGINEERING_STEPS.map((s) => s.label),
-  },
-  {
-    tone: "leaf",
-    Icon: Palmtree,
-    title: "Tourism & Hospitality Solutions",
-    href: "/solutions/tourism-hospitality",
-    sub: "Elevating experiences on water",
-    image: shotTourism,
-    items: [
-      "Luxury houseboats",
-      "Floating restaurants",
-      "Passenger ferries",
-      "Eco-tourism solutions",
-      "Water based transportation",
-    ],
-  },
-  {
-    tone: "violet",
-    Icon: Wrench,
-    title: "Shore Infrastructure Solutions",
-    href: "/solutions/shore-infrastructure",
-    sub: "Building smart and sustainable marine infrastructure",
-    image: shotShore,
-    items: [
-      "Smart jetties & pontoons",
-      "Ticketing counters",
-      "Waiting lounges",
-      "Terminal buildings",
-      "Floating infrastructure",
-    ],
-  },
-];
 
 /** Native sticky stack: each full-screen card slides up and covers the previous one. */
 function StackCard({ index, children }: { index: number; children: React.ReactNode }) {
@@ -355,6 +246,7 @@ function CtaSlideshow() {
 /* -------------------------------------------------------------------------- */
 
 function SolutionsPage() {
+  const { solutions, error } = Route.useLoaderData();
   const heroRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
@@ -409,11 +301,41 @@ function SolutionsPage() {
 
         {/* ------------------------------------------------- STACKED CARDS */}
         <section id="catalogue" className="sol-stack relative scroll-mt-0">
-          {SOLUTIONS.map((s, i) => (
-            <StackCard key={s.title} index={i}>
-              <SolutionCard {...s} index={i} />
-            </StackCard>
-          ))}
+          {error ? (
+            <div className="mx-auto max-w-[100rem] px-6 py-16 text-center text-sm text-brand-navy/70 sm:px-12">
+              {error}
+            </div>
+          ) : solutions.length === 0 ? (
+            <div className="mx-auto max-w-[100rem] px-6 py-16 text-center text-sm text-brand-navy/70 sm:px-12">
+              Solutions will appear here once published in the CMS.
+            </div>
+          ) : (
+            solutions.map((s, i) => {
+              const Icon = ICONS[i % ICONS.length];
+              console.log(s);
+              const tone = TONES[i % TONES.length];
+              const image = solutionImageUrl(s) || "";
+              const items =
+                s.benefits?.length > 0
+                  ? s.benefits.map((b) => b.point).filter(Boolean)
+                  : s.stats?.map((st) => `${st.value} ${st.label}`).filter(Boolean) || [];
+
+              return (
+                <StackCard key={s._id} index={i}>
+                  <SolutionCard
+                    title={s.name}
+                    sub={s.tagline || s.description || ""}
+                    items={items}
+                    image={image}
+                    Icon={Icon}
+                    tone={tone}
+                    index={i}
+                    solutionId={s._id}
+                  />
+                </StackCard>
+              );
+            })
+          )}
         </section>
 
 

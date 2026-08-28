@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
   BatteryCharging,
   Check,
   CircuitBoard,
@@ -369,7 +370,16 @@ function MarineElectrificationPage() {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <MarineInquiryDrawer />
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  to="/enquire"
+                  search={{ solution: "Marine Electrification", type: "solution" }}
+                  className="me-btn me-btn-primary inline-flex items-center gap-2"
+                >
+                  Enquire now <ArrowRight size={15} />
+                </Link>
+                <MarineInquiryDrawer triggerClassName="me-btn me-btn-ghost" triggerLabel="Quick drawer" />
+              </div>
             </Reveal>
           </div>
         </section>

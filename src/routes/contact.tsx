@@ -9,6 +9,7 @@ import { CountryFlag } from "@/components/CountryFlag";
 import { EarthGlobe, type GlobePoint } from "@/components/EarthGlobe";
 import { useSiteMotion } from "@/hooks/use-site-motion";
 import contactHeroVideo from "@/assets/contact-hero.mp4.asset.json";
+import { submitContactEnquiry } from "@/api";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -234,21 +235,43 @@ function ContactPage() {
   const [activeOffice, setActiveOffice] = useState<string | null>(OFFICES[0].city);
   useSiteMotion();
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const parsed = schema.safeParse(data);
+    
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form");
       return;
     }
+    
     setSending(true);
-    window.setTimeout(() => {
-      setSending(false);
+    
+    try {
+      // Prepare payload for API
+      const payload = {
+        clientName: parsed.data.name,
+        name: parsed.data.name,
+        email: parsed.data.email,
+        phone: parsed.data.phone,
+        company: undefined, // Not collected in this form
+        subject: parsed.data.subject,
+        location: parsed.data.location,
+        message: parsed.data.message,
+        sourcePage: "/contact",
+      };
+
+      await submitContactEnquiry(payload);
+      
       form.reset();
       toast.success("Thank you — your message is on its way to our team.");
-    }, 700);
+    } catch (error: any) {
+      console.error("Contact form submission error:", error);
+      toast.error(error.message || "Failed to submit. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (

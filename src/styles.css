@@ -361,13 +361,13 @@ html.cursor-dot-active * {
 }
 
 .cursor-ring {
-  border: 1.5px solid color-mix(in oklab, var(--brand-blue) 92%, transparent);
-  background: color-mix(in oklab, var(--brand-blue) 8%, transparent);
+  border: 1.5px solid var(--brand-sky, #29a7e1);
+  background: color-mix(in oklab, var(--brand-sky, #29a7e1) 12%, transparent);
   /* Double halo keeps the ring readable over bright video and dark imagery. */
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.85),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
-    0 2px 10px rgba(12, 46, 92, 0.35);
+    0 0 0 1.5px rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65),
+    0 2px 12px rgba(16, 43, 103, 0.45);
   /* Never let route-level transitions or filters touch the ring layer. */
   transition: none !important;
   filter: none !important;
@@ -6126,7 +6126,7 @@ html.perf-lite .about-hero-gl {
   height: 0.35rem;
   width: 0.35rem;
   flex: none;
-  border-radius: 999px;
+  border-radius: 0.05rem;
   background: var(--brand-forest, oklch(0.42 0.09 160));
 }
 
