@@ -37,7 +37,7 @@ export default function PartnersSection() {
     if (!section) return;
     const cleanups: Array<() => void> = [];
 
- 
+
 
     /* scroll-scrubbed card reveal — batched reads, then writes */
     const cards = Array.from(section.querySelectorAll<HTMLElement>(".pt-reveal"));
@@ -87,7 +87,9 @@ export default function PartnersSection() {
       <div className="pt-head">
         <div className="pt-eyebrow">Who we build with</div>
         <h2 ref={titleRef} className="pt-title">
-          Backed by shipyards, researchers, and OEMs — not built alone
+          Backed by shipyards, researchers, and{" "}
+          <span style={{ color: "#4d8f18" }}>OEMs</span>
+          {" "}— not built alone
         </h2>
         <p ref={subRef} className="pt-sub">
           From fabrication to propulsion research, every claim we make is co-signed by a partner who specializes in it.

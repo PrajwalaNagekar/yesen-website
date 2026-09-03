@@ -9529,3 +9529,30 @@ canvas {
   margin-left: auto;
   flex-shrink: 0;
 }
+
+/* OEM section - green */
+/* =========================
+   OEM GREEN OVERRIDE
+   ========================= */
+
+.pt-oem-glass .pt-tag {
+  color: #5EBF3E !important;
+}
+
+.pt-oem-glass .pt-tag i {
+  background-color: #5EBF3E !important;
+  border-color: #5EBF3E !important;
+}
+
+.pt-oem-glass h3 {
+  color: #5EBF3E !important;
+}
+
+.pt-oem-glass .pt-oem-pill {
+  color: #5EBF3E !important;
+  border-color: #5EBF3E !important;
+}
+
+.pt-oem-glass .pt-rule {
+  background-color: #5EBF3E !important;
+}
