@@ -6,7 +6,7 @@ import { API_BASE_URL } from "./config";
 import { resolveMediaUrl } from "./products";
 import type { ApiError } from "./types";
 
-export type ApiProjectStatus = "live" | "ongoing" | "completed";
+export type ApiProjectStatus = "live" | "inprogress" | "ongoing" | "completed";
 
 export interface ProjectImage {
   url?: string;
@@ -30,6 +30,7 @@ export interface ApiProject {
   status: ApiProjectStatus;
   image?: ProjectImage | null;
   imageUrl?: string | null;
+  sitePhotography?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -55,13 +56,20 @@ export interface ProjectRecord {
 }
 
 const STATUS_MAP: Record<
-  ApiProjectStatus,
+  string,
   { ui: UiProjectStatus; label: string }
 > = {
   completed: { ui: "complete", label: "Complete" },
   ongoing: { ui: "progress", label: "In progress" },
+  inprogress: { ui: "progress", label: "In progress" },
   live: { ui: "live", label: "Live" },
 };
+
+const MONGO_ID_RE = /^[a-f\d]{24}$/i;
+
+export function isValidProjectId(id: string | undefined | null): id is string {
+  return Boolean(id && MONGO_ID_RE.test(id));
+}
 
 async function projectsFetch<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -82,7 +90,12 @@ async function projectsFetch<T>(endpoint: string): Promise<T> {
 }
 
 export function mapProject(doc: ApiProject): ProjectRecord {
-  const mapped = STATUS_MAP[doc.status] ?? STATUS_MAP.ongoing;
+  if (!doc?._id) {
+    const error: ApiError = { message: "Project not found", status: 404 };
+    throw error;
+  }
+
+  const mapped = STATUS_MAP[doc.status] ?? STATUS_MAP.inprogress;
   const cover =
     resolveMediaUrl(doc.imageUrl || doc.image?.url) ||
     resolveMediaUrl(
@@ -103,6 +116,10 @@ export function mapProject(doc: ApiProject): ProjectRecord {
   if (doc.technology?.trim()) specs.push(["Technology", doc.technology.trim()]);
   specs.push(["Status", mapped.label]);
 
+  const gallery = (doc.sitePhotography ?? [])
+    .map((url) => resolveMediaUrl(url))
+    .filter((url): url is string => Boolean(url));
+
   return {
     id: String(doc._id),
     status: mapped.ui,
@@ -117,7 +134,7 @@ export function mapProject(doc: ApiProject): ProjectRecord {
     body: description,
     specs,
     cover,
-    gallery: cover ? [cover] : [],
+    gallery: gallery.length ? gallery : cover ? [cover] : [],
   };
 }
 

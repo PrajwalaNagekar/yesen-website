@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, Fragment } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 
+import { fetchProjects, isValidProjectId, type ProjectRecord } from "@/api/projects";
 import pp1 from "@/assets/proj-photo-1.jpg";
 import pp2 from "@/assets/proj-photo-2.jpg";
 import pp3 from "@/assets/proj-photo-3.jpg";
@@ -38,9 +41,26 @@ export default function ProjectsPhotos() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [pct, setPct] = useState(0);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const [apiProjects, setApiProjects] = useState<ProjectRecord[]>([]);
 
   useEffect(() => {
     setPct(progressPct());
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetchProjects({ limit: 100 })
+      .then(({ projects }) => {
+        if (active && projects && projects.length > 0) {
+          setApiProjects(projects);
+        }
+      })
+      .catch(() => {
+        // Graceful fallback to static slides on error
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   /* filter pill indicator */
@@ -114,13 +134,14 @@ export default function ProjectsPhotos() {
 
     cards.forEach((card) => io.observe(card));
     return () => io.disconnect();
-  }, [filter]);
+  }, [filter, apiProjects]);
 
-  const slides = useMemo<Array<{ id: string; status: Status; node: ReactNode }>>(
+  const staticSlides = useMemo<Array<{ id: string; status: Status; title: string; node: ReactNode }>>(
     () => [
       {
         id: "patratu",
         status: "ongoing",
+        title: "Tourism Solar Houseboats",
         node: (
           <article className="pj-card">
             <div className="pj-img" style={{ backgroundImage: `url(${pp1})` }} />
@@ -154,6 +175,7 @@ export default function ProjectsPhotos() {
       {
         id: "cial-ferry",
         status: "done",
+        title: "CIAL Solar-Electric Ferry",
         node: (
           <article className="pj-card">
             <div className="pj-img" style={{ backgroundImage: `url(${pp3})` }} />
@@ -174,6 +196,7 @@ export default function ProjectsPhotos() {
       {
         id: "rancare",
         status: "done",
+        title: "Rancare Commercial Centre",
         node: (
           <article className="pj-card">
             <div className="pj-img" style={{ backgroundImage: `url(${pp4})` }} />
@@ -196,6 +219,7 @@ export default function ProjectsPhotos() {
       {
         id: "cial-boat",
         status: "done",
+        title: "Electric Boat for CIAL",
         node: (
           <article className="pj-card">
             <div className="pj-img" style={{ backgroundImage: `url(${pp6})` }} />
@@ -217,6 +241,7 @@ export default function ProjectsPhotos() {
       {
         id: "residential",
         status: "done",
+        title: "Residential Solar Installations",
         node: (
           <article className="pj-card">
             <div className="pj-img" style={{ backgroundImage: `url(${pp8})` }} />
@@ -238,6 +263,67 @@ export default function ProjectsPhotos() {
     ],
     [pct],
   );
+
+  const slides = useMemo<Array<{ id: string; status: Status; node: ReactNode }>>(() => {
+    const fallbackCovers = [pp1, pp3, pp4, pp6, pp8];
+
+    const apiSlides = apiProjects.map((p, idx) => {
+      const isOngoing = p.status === "progress";
+      const isLive = p.status === "live";
+      const status: Status = isOngoing ? "ongoing" : "done";
+      const badgeClass = isOngoing ? "ongoing" : isLive ? "live" : "done";
+      const badgeLabel = isOngoing ? "Ongoing" : isLive ? "Live" : "Completed";
+      const coverUrl = p.cover || fallbackCovers[idx % fallbackCovers.length];
+
+      return {
+        id: p.id || `api-proj-${idx}`,
+        status,
+        node: (
+          <article className="pj-card" key={p.id || idx}>
+            <div className="pj-img" style={{ backgroundImage: `url(${coverUrl})` }} />
+            <div className="pj-scrim" />
+            <div className="pj-shine" />
+            <div className="pj-content">
+              <span className={`pj-badge ${badgeClass}`}>
+                <i />
+                {badgeLabel}
+              </span>
+              <h3>{p.title}</h3>
+              <div className="pj-loc">{p.loc || p.country || "India"}</div>
+              <p>{p.summary || p.body || ""}</p>
+              {isOngoing && (
+                <div className="pj-progress">
+                  <div className="pj-progress-meta">
+                    <span>{p.timeline && p.timeline !== "—" ? `Awarded ${p.timeline}` : "In progress"}</span>
+                    <span>{pct}% to completion</span>
+                  </div>
+                  <div className="pj-progress-track">
+                    <div className="pj-progress-fill" style={{ ["--pct" as string]: `${pct}%` }} />
+                  </div>
+                </div>
+              )}
+              {isValidProjectId(p.id) ? (
+                <Link
+                  to="/projects/$projectId"
+                  params={{ projectId: p.id }}
+                  className="mt-4 inline-flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-brand-ivory/90 transition-colors hover:text-white"
+                >
+                  Learn more <ArrowRight size={13} />
+                </Link>
+              ) : null}
+            </div>
+          </article>
+        ),
+      };
+    });
+
+    if (!apiSlides.length) return staticSlides;
+
+    const apiTitles = new Set(apiProjects.map((p) => p.title.trim().toLowerCase()));
+    const extraStatic = staticSlides.filter((slide) => !apiTitles.has(slide.title.trim().toLowerCase()));
+
+    return [...apiSlides, ...extraStatic];
+  }, [apiProjects, staticSlides, pct]);
 
   const visible = useMemo(
     () => slides.filter((s) => filter === "all" || s.status === filter),

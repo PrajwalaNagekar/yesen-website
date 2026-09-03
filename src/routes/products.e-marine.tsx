@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Activity,
   ArrowLeft,
-  ArrowRight,
+  
   Check,
   Gauge,
   Play,
@@ -378,14 +378,7 @@ function EMarinePage() {
                   Ferries, tour boats, trawlers, houseboats, yachts or workboats — share your route
                   and duty cycle and we will size an E-MARINE configuration around them.
                 </p>
-                <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                  <Link
-                    to="/enquire"
-                    search={{ product: "E-MARINE", type: "product" }}
-                    className="about-btn about-btn-primary"
-                  >
-                    Get a Quote <ArrowRight size={16} />
-                  </Link>
+                <div className="mt-10 flex justify-center lg:justify-start">
                   <EMarineInquiryDrawer />
                 </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { supabase } from "@/integrations/supabase/client";
+import { fetchTestimonials } from "@/api/testimonials";
 import { AddTestimonialDialog } from "@/components/AddTestimonialDialog";
 
 type Testimonial = {
@@ -30,13 +30,24 @@ export default function TestimonialWall() {
 
   useEffect(() => {
     let active = true;
-    supabase
-      .from("testimonials")
-      .select("id,quote,name,designation,company")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (active && data) setItems(data as Testimonial[]);
+    fetchTestimonials({ limit: 50 })
+      .then(({ testimonials }) => {
+        if (!active) return;
+        if (testimonials && testimonials.length > 0) {
+          const mapped: Testimonial[] = testimonials
+            .filter((t) => t.showOnWebsite !== false)
+            .map((t) => ({
+              id: t._id || t.id || "",
+              quote: t.quote || t.testimonial || "",
+              name: t.name || "",
+              designation: t.designation || null,
+              company: t.company || t.location || null,
+            }));
+          setItems(mapped);
+        }
+      })
+      .catch(() => {
+        // Fallback or empty
       });
     return () => {
       active = false;
@@ -63,15 +74,18 @@ export default function TestimonialWall() {
       <div className="tw-glow-b" aria-hidden />
 
       <div className="tw-head tw-head-row">
-        <div>
+        <div className="tw-head-content">
           <div className="tw-eyebrow">CLIENT VOICES</div>
+
           <div className="tw-title">
             Trusted by teams building <span>by nature</span>
           </div>
+
           <div className="tw-sub">
             What our partners say after working with YESEN Technologies Pvt Ltd
           </div>
         </div>
+
         <div className="tw-add-slot">
           <AddTestimonialDialog />
         </div>

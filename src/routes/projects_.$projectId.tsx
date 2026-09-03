@@ -1,21 +1,55 @@
-import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { Link, createFileRoute, isNotFound, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CalendarClock, Cpu, MapPin } from "lucide-react";
 
-import { fetchProject, fetchProjects, type ProjectRecord } from "@/api/projects";
+import {
+  fetchProject,
+  fetchProjects,
+  isValidProjectId,
+  type ProjectRecord,
+} from "@/api/projects";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { STATUS_DOT, STATUS_STYLES, projectNeighbours } from "@/lib/projects-log";
 
+const PROJECTS_LIST_KEY = ["projects", "list"] as const;
+
 export const Route = createFileRoute("/projects_/$projectId")({
-  loader: async ({ params }) => {
+  loader: async ({ params, context }) => {
+    if (!isValidProjectId(params.projectId)) {
+      throw notFound();
+    }
+
     try {
-      const [project, { projects }] = await Promise.all([
-        fetchProject(params.projectId),
-        fetchProjects({ limit: 100 }),
-      ]);
+      const project = await fetchProject(params.projectId);
       if (!project?.id) throw notFound();
+
+      const cachedList = context.queryClient.getQueryData<{
+        projects: ProjectRecord[];
+        error: string | null;
+      }>(PROJECTS_LIST_KEY);
+
+      let projects = cachedList?.projects ?? [];
+
+      if (!projects.length) {
+        try {
+          const { projects: items } = await fetchProjects({ limit: 100 });
+          projects = items;
+          context.queryClient.setQueryData(PROJECTS_LIST_KEY, {
+            projects: items,
+            error: null,
+          });
+        } catch {
+          projects = [project];
+        }
+      }
+
+      if (!projects.some((item) => item.id === project.id)) {
+        projects = [project, ...projects];
+      }
+
       return { project, projects };
     } catch (err) {
+      if (isNotFound(err)) throw err;
       if (err && typeof err === "object" && "status" in err) {
         const status = (err as { status?: number }).status;
         if (status === 404 || status === 400) throw notFound();
@@ -23,6 +57,7 @@ export const Route = createFileRoute("/projects_/$projectId")({
       throw err;
     }
   },
+  staleTime: 5 * 60 * 1000,
   head: ({ loaderData }) => {
     if (!loaderData?.project) {
       return {
@@ -113,7 +148,7 @@ function ProjectDetailPage() {
           <div className="mt-6 grid gap-px overflow-hidden rounded-md border border-brand-navy/12 bg-brand-navy/10 sm:grid-cols-3">
             {[
               { icon: MapPin, label: "Location", value: project.country },
-              { icon: CalendarClock, label: "Deployed", value: project.timeline },
+              { icon: CalendarClock, label: "Completion", value: project.timeline },
               { icon: Cpu, label: "Technology", value: project.technology },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="bg-white/85 px-4 py-3">
@@ -131,23 +166,39 @@ function ProjectDetailPage() {
             </p>
           ) : null}
 
-          {project.specs.length > 0 ? (
+          <div className="mt-6 grid max-w-xl gap-px overflow-hidden rounded-md border border-brand-navy/12 bg-brand-navy/10 sm:grid-cols-2">
+            {[
+              { label: "Deployed", value: project.timeline },
+              { label: "Status", value: project.statusLabel },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-white/85 px-4 py-3">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-brand-navy/50">
+                  {label}
+                </p>
+                <p className="mt-1 text-[0.92rem] leading-snug text-brand-navy">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {project.specs.filter(([k]) => k !== "Deployed" && k !== "Status").length > 0 ? (
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {project.specs.map(([k, v]) => (
-                <motion.div
-                  key={k}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="rounded-md border border-brand-navy/12 bg-white/80 px-4 py-3"
-                >
-                  <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-brand-navy/50">
-                    {k}
-                  </p>
-                  <p className="mt-1 text-[0.92rem] text-brand-navy">{v}</p>
-                </motion.div>
-              ))}
+              {project.specs
+                .filter(([k]) => k !== "Deployed" && k !== "Status")
+                .map(([k, v]) => (
+                  <motion.div
+                    key={k}
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.4 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="rounded-md border border-brand-navy/12 bg-white/80 px-4 py-3"
+                  >
+                    <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-brand-navy/50">
+                      {k}
+                    </p>
+                    <p className="mt-1 text-[0.92rem] text-brand-navy">{v}</p>
+                  </motion.div>
+                ))}
             </div>
           ) : null}
 
@@ -155,6 +206,34 @@ function ProjectDetailPage() {
             <p className="mt-8 max-w-3xl text-[0.95rem] leading-[1.75] text-brand-navy/80">
               {project.body}
             </p>
+          ) : null}
+
+          {project.gallery.length > 0 ? (
+            <div className="mt-10">
+              <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-brand-navy/50">
+                Site photography
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {project.gallery.map((src, index) => (
+                  <motion.div
+                    key={`${src}-${index}`}
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: index * 0.05 }}
+                    className="overflow-hidden rounded-md border border-brand-navy/12 bg-white/80"
+                  >
+                    <img
+                      src={src}
+                      alt={`${project.title} site photo ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="aspect-[4/3] h-full w-full object-cover"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           ) : null}
 
           <ProjectPager id={project.id} projects={projects} />
@@ -165,29 +244,31 @@ function ProjectDetailPage() {
                 More projects
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                {more.map((p) => (
-                  <Link
-                    key={p.id}
-                    to="/projects/$projectId"
-                    params={{ projectId: p.id }}
-                    className="group overflow-hidden rounded-md border border-brand-navy/12 bg-white/80 transition-transform hover:-translate-y-1"
-                  >
-                    {p.cover ? (
-                      <img
-                        src={p.cover}
-                        alt={p.title}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-28 w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-28 w-full bg-brand-navy/10" />
-                    )}
-                    <p className="p-3 font-display text-[0.95rem] leading-snug text-brand-navy">
-                      {p.title}
-                    </p>
-                  </Link>
-                ))}
+                {more.map((p) =>
+                  isValidProjectId(p.id) ? (
+                    <Link
+                      key={p.id}
+                      to="/projects/$projectId"
+                      params={{ projectId: p.id }}
+                      className="group overflow-hidden rounded-md border border-brand-navy/12 bg-white/80 transition-transform hover:-translate-y-1"
+                    >
+                      {p.cover ? (
+                        <img
+                          src={p.cover}
+                          alt={p.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-28 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-28 w-full bg-brand-navy/10" />
+                      )}
+                      <p className="p-3 font-display text-[0.95rem] leading-snug text-brand-navy">
+                        {p.title}
+                      </p>
+                    </Link>
+                  ) : null,
+                )}
               </div>
             </div>
           ) : null}
@@ -201,7 +282,8 @@ function ProjectDetailPage() {
 
 function ProjectPager({ id, projects }: { id: string; projects: ProjectRecord[] }) {
   const { prev, next } = projectNeighbours(id, projects);
-  if (!prev || !next || projects.length < 2) return null;
+  if (!prev || !next || projects.length < 2 || prev.id === next.id) return null;
+  if (!isValidProjectId(prev.id) || !isValidProjectId(next.id)) return null;
 
   return (
     <div className="mt-12 grid gap-3 border-t border-brand-navy/12 pt-8 sm:grid-cols-2">

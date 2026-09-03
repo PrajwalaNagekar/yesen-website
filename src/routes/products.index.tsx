@@ -23,8 +23,9 @@ import heroVideo from "@/assets/products-hero-v3.mp4.asset.json";
 
 const ACCENTS = ["blue", "leaf", "indigo", "amber"] as const;
 
-function padNo(serialNo: number) {
-  return String(serialNo).padStart(2, "0");
+/** Display serial from list position (1-based), e.g. index 0 → "01". */
+function getSerialNo(index: number) {
+  return String(index + 1).padStart(2, "0");
 }
 
 export const Route = createFileRoute("/products/")({
@@ -164,8 +165,8 @@ function ProductsPage() {
             <div className="pd-hero-inner mx-auto w-full max-w-[100rem]">
               <Reveal className="relative z-10">
                 <div className="flex flex-wrap items-center gap-4">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-brand-navy/12 bg-white/70 px-4 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.3em] text-brand-forest shadow-[0_10px_30px_-20px_rgb(12_46_92/0.6)] backdrop-blur-xl">
-                    <Waves size={13} className="about-float" /> Our Products
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-navy/12 bg-white/70 px-2.5 py-1 font-mono !text-[0.5rem] uppercase tracking-[0.18em] text-brand-forest shadow-[0_10px_30px_-20px_rgb(12_46_92/0.6)] backdrop-blur-xl sm:px-3 sm:py-1.5 sm:!text-[0.55rem] sm:tracking-[0.22em] lg:gap-2 lg:px-4 lg:py-1.5 lg:!text-[0.62rem] lg:tracking-[0.3em]">
+                    <Waves size={10} className="about-float lg:h-[13px] lg:w-[13px]" /> Our Products
                   </span>
                   <span className="pd-hero-meta text-brand-navy/45">{countLabel}</span>
                 </div>
@@ -231,7 +232,7 @@ function ProductsPage() {
                           </div>
                         ) : null}
 
-                        <span className="product-no">{padNo(p.serialNo)}</span>
+                        <span className="product-no">{getSerialNo(i)}</span>
                         <h2 className="product-name">{p.name}</h2>
                         <p className="mt-1 font-display text-lg text-brand-navy">{p.label}</p>
                         <p className="mt-3 max-w-md text-sm leading-relaxed text-brand-navy/65">
@@ -311,7 +312,7 @@ function ProductsPage() {
                           >
                             Learn More <ArrowRight size={14} />
                           </Link>
-                       
+
                         </div>
                       </article>
                     </Reveal>
@@ -328,7 +329,7 @@ function ProductsPage() {
             <div className="about-card grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div className="flex items-start gap-4">
                 <span className="product-no shrink-0">
-                  {products.length ? padNo(products.length + 1) : "05"}
+                  {products.length ? getSerialNo(products.length) : "05"}
                 </span>
                 <div>
                   <h2 className="font-display text-2xl">IEC Certified Technology</h2>

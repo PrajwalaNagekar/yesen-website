@@ -283,32 +283,28 @@ const BRANDS = [
 
 const CLIMATE_STATS = [
   {
-    value: 430,
-    prefix: "~",
-    suffix: " ppm",
-    label: "ATMOSPHERIC CO₂ CONCENTRATION, RECORD HIGH",
-    source: "NOAA Climate.gov",
+    value: 80,
+    suffix: "+",
+    label: "Vessels electrified through marine solutions",
+    source: "",
   },
   {
-    value: 1.55,
-    prefix: "",
-    suffix: "°C",
-    label: "WARMEST YEAR ON RECORD (2024) ABOVE PRE-INDUSTRIAL LEVELS",
-    source: "NOAA Climate.gov",
+    value: 15,
+    suffix: " MW",
+    label: "Land-based solar & renewable energy deployed",
+    source: "",
   },
   {
-    value: 38.4,
-    prefix: "",
-    suffix: " Gt",
-    label: "GLOBAL ENERGY-RELATED CO₂ EMISSIONS IN 2025",
-    source: "IEA Global Energy Review 2026",
+    value: 4,
+    suffix: "",
+    label: "Product families powering clean energy systems",
+    source: "",
   },
   {
-    value: 90,
-    prefix: "",
-    suffix: "%+",
-    label: "EXCESS OCEAN HEAT ABSORBED FROM GLOBAL WARMING",
-    source: "NOAA Climate.gov",
+    value: 12,
+    suffix: "+",
+    label: "Countries served across marine & land projects",
+    source: "",
   },
 ];
 
@@ -387,54 +383,262 @@ function CountUp({
 
 
 
-function CapabilitiesSlider() {
-  return (
-    <div className="relative mt-6">
-      {CAPABILITIES.map(({ title, body, Icon, cta, to, bg }, i) => (
-        <section
-          key={title}
-          data-capability-slide={i}
-          className="sticky top-0 flex h-[100svh] items-center overflow-hidden bg-background"
-          style={{ zIndex: i + 1 }}
-          aria-label={title}
-        >
-          <div className="mx-auto grid w-full max-w-[92rem] items-center gap-10 px-1 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-            <div className="order-2 lg:order-1">
-              <span className="flex items-center gap-5">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-brand-leaf bg-brand-leaf text-brand-navy">
-                  <Icon className="h-5 w-5" strokeWidth={1.4} />
-                </span>
-                <span className="font-mono text-[0.6rem] uppercase tracking-[0.34em] text-brand-navy/45">
-                  {String(i + 1).padStart(2, "0")} / {String(CAPABILITIES.length).padStart(2, "0")}
-                </span>
-              </span>
-              <h3 className="display-xl mt-6 text-4xl text-brand-navy sm:text-[3.4rem]">{title}</h3>
-              <p className="mt-5 max-w-xl text-[0.98rem] leading-[1.9] text-brand-navy/80">{body}</p>
-              <Link
-                to={to}
-                className="mt-7 inline-flex items-center gap-2 font-display text-base italic text-brand-navy underline decoration-brand-leaf underline-offset-8 transition-opacity hover:opacity-70"
-              >
-                {cta}
-                <ArrowRight className="h-4 w-4" strokeWidth={1.4} />
-              </Link>
-            </div>
 
-            <div className="order-1 flex w-full justify-center lg:order-2 lg:justify-end">
-              <div className="relative aspect-square w-full max-w-[22rem] overflow-hidden rounded-[1.75rem] border border-brand-navy/12 shadow-[0_50px_120px_-70px_rgb(1_33_84/0.8)] sm:max-w-[28rem]">
-                <img
-                  src={bg}
-                  alt={title}
-                  loading="lazy"
-                  decoding="async"
-                  className="absolute inset-0 h-full w-full scale-[1.02] object-cover object-center"
-                  style={{ filter: "saturate(1.06) contrast(1.02)" }}
-                />
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_35%,transparent_60%,rgb(1_33_84/0.28)_100%)]" />
+function CapabilitiesSlider() {
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+
+    const slides = Array.from(
+      slider.querySelectorAll<HTMLElement>("[data-capability-slide]")
+    );
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, value));
+
+    const update = () => {
+      // Desktop stays exactly as normal.
+      if (window.innerWidth >= 1024) {
+        slides.forEach((slide, index) => {
+          slide.style.transform = "";
+          slide.style.opacity = "";
+          slide.style.zIndex = String(index + 1);
+        });
+        return;
+      }
+
+      const viewportHeight = window.innerHeight;
+
+      slides.forEach((slide, index) => {
+        const nextSlide = slides[index + 1];
+
+        // Last slide stays fully visible.
+        if (!nextSlide) {
+          slide.style.transform =
+            "translate3d(0, 0, 0) scale(1)";
+          slide.style.opacity = "1";
+          slide.style.zIndex = String(index + 1);
+          return;
+        }
+
+        const nextTop = nextSlide.getBoundingClientRect().top;
+
+        /*
+         * nextTop:
+         *
+         * viewportHeight -> next slide has just entered
+         * 0              -> next slide has reached the top
+         *
+         * Therefore:
+         * 0 -> 1 progress while the next card covers this one.
+         */
+        const progress = clamp(
+          (viewportHeight - nextTop) / viewportHeight,
+          0,
+          1
+        );
+
+        // Stronger smooth easing so the effect is clearly visible on mobile.
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        /*
+         * Previous card:
+         * - moves upward
+         * - scales down
+         * - fades slightly
+         *
+         * This creates the same "stacked cards" feeling.
+         */
+        const translateY = -(eased * 70);
+        const scale = 1 - eased * 0.08;
+        const opacity = 1 - eased * 0.22;
+
+        slide.style.transform = `
+          translate3d(
+            0,
+            ${translateY.toFixed(2)}px,
+            0
+          )
+          scale(${scale.toFixed(4)})
+        `;
+
+        slide.style.opacity = opacity.toFixed(3);
+
+        // Newer slide must always sit above the previous one.
+        slide.style.zIndex = String(index + 1);
+      });
+    };
+
+    const cleanup = onScrollFrame(update);
+
+    // Initial state.
+    update();
+
+    const handleResize = () => update();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cleanup();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={sliderRef}
+      className="relative mt-6"
+    >
+      {CAPABILITIES.map(
+        ({ title, body, Icon, cta, to, bg }, i) => (
+          <section
+            key={title}
+            data-capability-slide={i}
+            className="
+              sticky top-0
+              flex h-[100svh]
+              items-center
+              overflow-hidden
+              bg-background
+              will-change-transform
+              lg:will-change-auto
+            "
+            style={{
+              zIndex: i + 1,
+            }}
+            aria-label={title}
+          >
+            {/* MOBILE + TABLET */}
+            <div
+              className="
+                flex
+                w-full
+                flex-col
+                px-6
+                sm:px-10
+                lg:hidden
+              "
+            >
+              {/* TITLE */}
+              <div>
+                <span className="flex items-center gap-5">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-brand-leaf bg-brand-leaf text-brand-navy sm:h-12 sm:w-12">
+                    <Icon
+                      className="h-5 w-5"
+                      strokeWidth={1.4}
+                    />
+                  </span>
+
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-brand-navy/45 sm:tracking-[0.34em]">
+                    {String(i + 1).padStart(2, "0")} /{" "}
+                    {String(CAPABILITIES.length).padStart(2, "0")}
+                  </span>
+                </span>
+
+                <h3 className="display-xl mt-5 text-4xl leading-[1.05] text-brand-navy sm:mt-6 sm:text-5xl">
+                  {title}
+                </h3>
+              </div>
+
+              {/* IMAGE */}
+              <div className="mt-7 flex w-full justify-center sm:mt-9">
+                <div className="relative aspect-[4/3] w-full max-w-[30rem] overflow-hidden rounded-[1.5rem] border border-brand-navy/12 shadow-[0_50px_120px_-70px_rgb(1_33_84/0.8)] sm:aspect-square">
+                  <img
+                    src={bg}
+                    alt={title}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full scale-[1.02] object-cover object-center"
+                    style={{
+                      filter:
+                        "saturate(1.06) contrast(1.02)",
+                    }}
+                  />
+
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_35%,transparent_60%,rgb(1_33_84/0.28)_100%)]" />
+                </div>
+              </div>
+
+              {/* BODY */}
+              <div className="mt-7 sm:mt-9">
+                <p className="max-w-xl text-[0.92rem] leading-[1.75] text-brand-navy/80 sm:text-[0.98rem] sm:leading-[1.9]">
+                  {body}
+                </p>
+
+                <Link
+                  to={to}
+                  className="mt-5 inline-flex items-center gap-2 font-display text-base italic text-brand-navy underline decoration-brand-leaf underline-offset-8 transition-opacity hover:opacity-70 sm:mt-7"
+                >
+                  {cta}
+
+                  <ArrowRight
+                    className="h-4 w-4"
+                    strokeWidth={1.4}
+                  />
+                </Link>
               </div>
             </div>
-          </div>
-        </section>
-      ))}
+
+            {/* DESKTOP — unchanged */}
+            <div className="mx-auto hidden w-full max-w-[92rem] items-center gap-10 px-1 lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
+              <div className="order-2 lg:order-1">
+                <span className="flex items-center gap-5">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-brand-leaf bg-brand-leaf text-brand-navy">
+                    <Icon
+                      className="h-5 w-5"
+                      strokeWidth={1.4}
+                    />
+                  </span>
+
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.34em] text-brand-navy/45">
+                    {String(i + 1).padStart(2, "0")} /{" "}
+                    {String(CAPABILITIES.length).padStart(2, "0")}
+                  </span>
+                </span>
+
+                <h3 className="display-xl mt-6 text-4xl text-brand-navy sm:text-[3.4rem]">
+                  {title}
+                </h3>
+
+                <p className="mt-5 max-w-xl text-[0.98rem] leading-[1.9] text-brand-navy/80">
+                  {body}
+                </p>
+
+                <Link
+                  to={to}
+                  className="mt-7 inline-flex items-center gap-2 font-display text-base italic text-brand-navy underline decoration-brand-leaf underline-offset-8 transition-opacity duration-300 hover:opacity-70"
+                >
+                  {cta}
+
+                  <ArrowRight
+                    className="h-4 w-4"
+                    strokeWidth={1.4}
+                  />
+                </Link>
+              </div>
+
+              <div className="order-1 flex w-full justify-center lg:order-2 lg:justify-end">
+                <div className="relative aspect-square w-full max-w-[22rem] overflow-hidden rounded-[1.75rem] border border-brand-navy/12 shadow-[0_50px_120px_-70px_rgb(1_33_84/0.8)] sm:max-w-[28rem]">
+                  <img
+                    src={bg}
+                    alt={title}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full scale-[1.02] object-cover object-center"
+                    style={{
+                      filter:
+                        "saturate(1.06) contrast(1.02)",
+                    }}
+                  />
+
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_35%,transparent_60%,rgb(1_33_84/0.28)_100%)]" />
+                </div>
+              </div>
+            </div>
+          </section>
+        )
+      )}
     </div>
   );
 }
@@ -591,8 +795,8 @@ const HomeHeader = React.memo(function HomeHeader() {
           >
             {NAV.map((item) => {
               const cls = `relative py-1 font-mono text-[0.72rem] uppercase tracking-[0.22em] transition-colors duration-300 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-right after:scale-x-0 after:bg-brand-leaf after:transition-transform after:duration-500 hover:after:origin-left hover:after:scale-x-100 ${atTop
-                  ? "text-brand-ivory hover:text-brand-leaf"
-                  : "text-brand-navy hover:text-brand-forest"
+                ? "text-brand-ivory hover:text-brand-leaf"
+                : "text-brand-navy hover:text-brand-forest"
                 }`;
               return item === "About" ? (
                 <Link key={item} to="/about" className={cls}>
@@ -626,8 +830,8 @@ const HomeHeader = React.memo(function HomeHeader() {
             <Link
               to="/enquire"
               className={`inline-flex h-11 items-center rounded-full border px-6 font-mono text-[0.68rem] uppercase tracking-[0.22em] backdrop-blur-md transition-colors duration-500 ${atTop
-                  ? "border-brand-ivory/35 bg-white/10 text-brand-ivory hover:border-brand-leaf"
-                  : "border-brand-navy/15 bg-white/70 text-brand-navy hover:border-brand-leaf"
+                ? "border-brand-ivory/35 bg-white/10 text-brand-ivory hover:border-brand-leaf"
+                : "border-brand-navy/15 bg-white/70 text-brand-navy hover:border-brand-leaf"
                 }`}
             >
               Get a quote
@@ -943,33 +1147,58 @@ function Home() {
 
           {/* Global Warming Impact Stats Bar */}
           <section className="relative border-b border-border bg-surface-tint/60">
-            <div className="mx-auto w-full max-w-[100rem] px-6 py-14 sm:px-10 sm:py-16 lg:py-[4.5rem]">
-              <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0">
+            <div className="mx-auto w-full max-w-[100rem] px-4 py-8 sm:px-10 sm:py-12 lg:py-[4.5rem]">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-y-0">
                 {CLIMATE_STATS.map((stat, i) => (
                   <div
                     key={stat.label}
                     data-card-slide
                     data-slide-delay={i * 90}
-                    className="group relative min-w-0 sm:px-6 lg:px-10 lg:first:pl-0"
+                    className="
+      group relative min-w-0
+      rounded-lg border border-brand-navy/8
+      bg-brand-leaf/[0.06]
+      px-3 py-3
+      shadow-[0_4px_18px_-14px_rgb(12_46_92/0.2)]
+      transition-all duration-300
+      hover:-translate-y-0.5 hover:bg-brand-leaf/[0.08]
+
+      sm:rounded-lg
+      sm:px-4 sm:py-4
+
+      lg:rounded-none
+      lg:border-0
+      lg:bg-transparent
+      lg:px-10 lg:py-0
+      lg:first:pl-0
+      lg:shadow-none
+      lg:hover:translate-y-0
+      lg:hover:bg-transparent
+    "
+                    style={{
+                      animation: `climateStatIn 0.45s ease-out ${i * 90}ms both`,
+                    }}
                   >
-                    {/* Vertical divider */}
+                    {/* Vertical divider — desktop only */}
                     <span
                       className="pointer-events-none absolute left-0 top-1/2 hidden h-3/4 w-px -translate-y-1/2 bg-border lg:block lg:first:hidden"
                       aria-hidden="true"
                     />
 
-                    <p className="display-xl whitespace-nowrap text-[clamp(2.2rem,5vw,3.4rem)] leading-[1.1] text-brand-navy transition-colors duration-500 group-hover:text-brand-forest lg:text-[clamp(2.4rem,2.8vw,3.6rem)]">
+                    {/* Number */}
+                    <p className="display-xl whitespace-nowrap text-[1.3rem] leading-none text-brand-navy transition-colors duration-300 group-hover:text-brand-forest sm:text-[1.5rem] lg:text-[clamp(2.4rem,2.8vw,3.6rem)] lg:leading-[1.1]">
                       <CountUp
                         to={stat.value}
-                        prefix={stat.prefix}
                         suffix={stat.suffix}
                         decimals={stat.value % 1 !== 0 ? 2 : 0}
                       />
                     </p>
 
-                    <span className="mt-2 block h-px w-10 origin-left scale-x-0 bg-brand-leaf transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
+                    {/* Accent line */}
+                    <span className="mt-2 block h-px w-5 origin-left bg-brand-leaf/70 transition-transform duration-500 ease-out group-hover:w-8 sm:w-6 lg:mt-2 lg:w-10" />
 
-                    <p className="mt-5 max-w-[18rem] font-mono text-[0.62rem] uppercase leading-[1.8] tracking-[0.26em] text-muted-foreground">
+                    {/* Label */}
+                    <p className="climate-stat-label mt-2 max-w-[15rem] font-mono uppercase leading-[1.4] tracking-[0.1em] text-muted-foreground sm:mt-3 sm:leading-[1.5] sm:tracking-[0.13em] lg:mt-5 lg:text-[0.62rem] lg:leading-[1.8] lg:tracking-[0.26em]">
                       {stat.label}
                     </p>
 
@@ -979,22 +1208,23 @@ function Home() {
               </div>
 
               {/* Sourcing footnote */}
-              <div className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/60 pt-5 sm:mt-14 lg:mt-16">
-                <span className="font-mono text-[0.58rem] uppercase tracking-[0.2em] text-muted-foreground/80">
+              <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border/60 pt-4 sm:mt-10 lg:mt-16 lg:pt-5">
+                <span className="climate-source-title font-mono uppercase tracking-[0.14em] text-muted-foreground/80 sm:tracking-[0.18em] lg:text-[0.58rem] lg:tracking-[0.2em]">
                   Sources
                 </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-full border border-border/80 bg-shell/80 px-2.5 py-1 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-brand-navy/70">
+
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className="climate-source-pill inline-flex items-center rounded-full border border-border/80 bg-shell/80 px-2 py-0.5 font-mono uppercase tracking-[0.08em] text-brand-navy/70 sm:px-2.5 sm:py-1 sm:tracking-[0.12em] lg:text-[0.6rem] lg:tracking-[0.14em]">
                     IEA Global Energy Review 2026
                   </span>
-                  <span className="inline-flex items-center rounded-full border border-border/80 bg-shell/80 px-2.5 py-1 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-brand-navy/70">
+
+                  <span className="climate-source-pill inline-flex items-center rounded-full border border-border/80 bg-shell/80 px-2 py-0.5 font-mono uppercase tracking-[0.08em] text-brand-navy/70 sm:px-2.5 sm:py-1 sm:tracking-[0.12em] lg:text-[0.6rem] lg:tracking-[0.14em]">
                     NOAA Climate.gov
                   </span>
                 </div>
               </div>
             </div>
           </section>
-
           {/* Intro — Who we are */}
           <section
             id="about"
@@ -1092,14 +1322,13 @@ function Home() {
                     engineering solutions — from vessel design and fabrication to testing,
                     launching, and commissioning.
                   </p>
-                  <div className="mt-8 flex flex-wrap gap-3">
+                  <div className="mt-6 flex flex-wrap gap-2 sm:gap-2.5">
                     {["Vessel design", "Fabrication", "Testing", "Launching", "Commissioning"].map(
                       (tag) => (
                         <span
                           key={tag}
-                          className="rounded-full border border-brand-ivory/30 px-4 py-2 font-mono text-[0.6rem] uppercase tracking-[0.22em] text-brand-ivory/80 transition-colors duration-300 hover:border-brand-leaf hover:text-brand-leaf"
+                          className="rounded-full border border-brand-ivory/30 px-2.5 py-1 font-mono text-[0.44rem] tracking-[0.1em] text-brand-ivory/80 transition-colors duration-300 hover:border-brand-leaf hover:text-brand-leaf sm:px-3 sm:py-1 sm:text-[0.5rem] sm:tracking-[0.14em] lg:px-4 lg:py-2 lg:text-[0.6rem] lg:tracking-[0.22em]"
                         >
-
                           {tag}
                         </span>
                       ),
@@ -1349,11 +1578,11 @@ function Home() {
                     Marine systems built for daily service — certified battery packs,
                     intelligent controls and safety layers engineered for life on the water.
                   </p>
-                  <ul className="mt-8 flex flex-wrap gap-2.5">
+                  <ul className="mt-6 flex flex-wrap gap-1.5 sm:gap-2">
                     {EMARINE_TAGS.map((tag) => (
                       <li
                         key={tag}
-                        className="rounded-full border border-brand-navy/15 bg-background px-4 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-brand-navy/80"
+                        className="rounded-full border border-brand-black px-2.5 py-1 font-mono !text-[0.45rem] tracking-[0.1em] text-brand-navy/70 transition-colors duration-300 hover:border-brand-leaf hover:text-brand-leaf sm:px-3 sm:py-1 sm:!text-[0.45rem] sm:tracking-[0.14em] lg:px-4 lg:py-2 lg:!text-[0.6rem] lg:tracking-[0.22em]"
                       >
                         {tag}
                       </li>
@@ -1538,16 +1767,28 @@ function Home() {
             </div>
           </div>
 
-          <div className="border-t border-border">
-            <div className="mx-auto flex w-full max-w-[100rem] flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-12">
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+
+          {/* <div className="border-t border-border">
+            <div className="mx-auto flex w-full max-w-[100rem] items-center justify-between gap-3 px-6 py-6 sm:px-12">
+              <p className="font-mono !text-[0.5rem] tracking-[0.1em] text-muted-foreground sm:!text-[0.55rem] sm:tracking-[0.12em] lg:!text-[0.7rem] lg:tracking-[0.14em]">
                 © {new Date().getFullYear()} YESEN Technologies Pvt Ltd
               </p>
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+
+              <p className="font-mono !text-[0.45rem] tracking-[0.08em] text-muted-foreground sm:!text-[0.5rem] sm:tracking-[0.1em] lg:!text-[0.6rem] lg:tracking-[0.16em]">
                 Technology by Nature
               </p>
             </div>
+          </div> */}
+
+
+          <div className="border-t border-border">
+            <div className="mx-auto flex w-full max-w-[100rem] items-center justify-center px-6 py-6 sm:px-12">
+              <p className="font-mono !text-[0.5rem] tracking-[0.1em] text-muted-foreground sm:!text-[0.55rem] sm:tracking-[0.12em] lg:!text-[0.7rem] lg:tracking-[0.14em]">
+                © {new Date().getFullYear()} YESEN Technologies Pvt Ltd
+              </p>
+            </div>
           </div>
+
         </footer>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { Check, Plus } from "lucide-react";
 import { z } from "zod";
 
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { createTestimonial } from "@/api/testimonials";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(100),
@@ -40,19 +40,20 @@ export function AddTestimonialDialog() {
       return;
     }
     setBusy(true);
-    const { error: dbError } = await supabase.from("testimonials").insert({
-      name: parsed.data.name,
-      designation: parsed.data.designation || null,
-      company: parsed.data.company || null,
-      quote: parsed.data.quote,
-      status: "pending",
-    });
-    setBusy(false);
-    if (dbError) {
-      setError("Could not submit right now. Please try again.");
-      return;
+    try {
+      await createTestimonial({
+        name: parsed.data.name,
+        designation: parsed.data.designation || undefined,
+        company: parsed.data.company || undefined,
+        quote: parsed.data.quote,
+        testimonial: parsed.data.quote,
+      });
+      setSent(true);
+    } catch (err: any) {
+      setError(err?.message || "Could not submit right now. Please try again.");
+    } finally {
+      setBusy(false);
     }
-    setSent(true);
   }
 
   return (
@@ -85,8 +86,8 @@ export function AddTestimonialDialog() {
             </span>
             <p className="mt-4 font-display text-lg text-brand-navy">Submitted for review</p>
             <p className="mt-2 text-[0.82rem] leading-relaxed text-brand-navy/60">
-              Thank you — your testimonial has been sent to our team. It will appear here once
-              approved.
+              Thank you — your testimonial has been sent to our team. It will appear on the website
+              once our team approves it and enables it for publication.
             </p>
           </div>
         ) : (
@@ -124,7 +125,7 @@ export function AddTestimonialDialog() {
               {busy ? "Submitting…" : "Submit for approval"}
             </button>
             <p className="text-center text-[0.72rem] text-brand-navy/50">
-              Submissions are published only after our team approves them.
+              Submissions are reviewed by our team before they are published on the website.
             </p>
           </form>
         )}

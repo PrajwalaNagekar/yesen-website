@@ -119,10 +119,12 @@ function SolutionDetailPage() {
   const imageUrl = solutionImageUrl(solution);
   const benefits = solution.benefits ?? [];
   const stats = solution.stats ?? [];
-  const features =
-    solution.features && solution.features.length > 0
-      ? solution.features
-      : benefits.map((b) => b.point).filter(Boolean);
+  const features = solution.features ?? [];
+  const includedDescription =
+    solution.description?.trim() &&
+    solution.description.trim() !== solution.tagline?.trim()
+      ? solution.description
+      : null;
 
   const serialFormatted = String(solution.serialNo ?? 1).padStart(2, "0");
   const iconIndex = typeof solution.serialNo === "number" ? Math.max(0, solution.serialNo - 1) : 0;
@@ -205,9 +207,9 @@ function SolutionDetailPage() {
             <Reveal className="mx-auto max-w-[40rem] text-center">
               <p className="me-eyebrow">What&apos;s Included</p>
               <h2 className="me-h2 mt-4">How we deliver {solution.name}</h2>
-              {solution.description ? (
+              {includedDescription ? (
                 <p className="mt-4 text-[1rem] leading-relaxed text-white/60">
-                  {solution.description}
+                  {includedDescription}
                 </p>
               ) : null}
             </Reveal>

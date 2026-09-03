@@ -185,7 +185,7 @@ function SolutionCard({
               >
                 Learn more <ArrowRight size={13} />
               </Link>
-           
+
             </div>
           ) : null}
         </div>
@@ -273,8 +273,8 @@ function SolutionsPage() {
             className="relative z-10 mx-auto w-full max-w-4xl text-center"
           >
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-brand-navy/12 bg-white/70 px-4 py-1.5 font-mono text-[0.62rem] uppercase tracking-[0.3em] text-brand-forest shadow-[0_10px_30px_-20px_rgb(12_46_92/0.6)] backdrop-blur-xl">
-                <Waves size={13} className="about-float" /> Our Solutions
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-navy/12 bg-white/70 px-2.5 py-1 font-mono !text-[0.5rem] uppercase tracking-[0.18em] text-brand-forest shadow-[0_10px_30px_-20px_rgb(12_46_92/0.6)] backdrop-blur-xl sm:px-3 sm:py-1.5 sm:!text-[0.55rem] sm:tracking-[0.22em] lg:gap-2 lg:px-4 lg:py-1.5 lg:!text-[0.62rem] lg:tracking-[0.3em]">
+                <Waves size={10} className="about-float lg:h-[13px] lg:w-[13px]" /> Our Solutions
               </span>
 
               <h1 className="display-xl mx-auto mt-8 max-w-3xl text-[clamp(2.3rem,5vw,4.4rem)] leading-[1.06]">
@@ -312,13 +312,14 @@ function SolutionsPage() {
           ) : (
             solutions.map((s, i) => {
               const Icon = ICONS[i % ICONS.length];
-              console.log(s);
               const tone = TONES[i % TONES.length];
               const image = solutionImageUrl(s) || "";
               const items =
-                s.benefits?.length > 0
-                  ? s.benefits.map((b) => b.point).filter(Boolean)
-                  : s.stats?.map((st) => `${st.value} ${st.label}`).filter(Boolean) || [];
+                (s.features?.length ?? 0) > 0
+                  ? s.features!.filter(Boolean)
+                  : (s.benefits?.length ?? 0) > 0
+                    ? s.benefits!.map((b) => b.point).filter(Boolean)
+                    : s.stats?.map((st) => `${st.value} ${st.label}`).filter(Boolean) || [];
 
               return (
                 <StackCard key={s._id} index={i}>
@@ -548,11 +549,10 @@ function RetrofitShowcase() {
             type="button"
             onClick={() => setActive(i)}
             aria-pressed={i === active}
-            className={`group overflow-hidden rounded-xl border bg-card text-left transition-all duration-300 hover:shadow-sm ${
-              i === active
-                ? "border-brand-blue shadow-sm ring-1 ring-brand-blue/40"
-                : "border-border hover:border-brand-blue"
-            }`}
+            className={`group overflow-hidden rounded-xl border bg-card text-left transition-all duration-300 hover:shadow-sm ${i === active
+              ? "border-brand-blue shadow-sm ring-1 ring-brand-blue/40"
+              : "border-border hover:border-brand-blue"
+              }`}
           >
             <div className="aspect-[16/9] overflow-hidden bg-muted">
               <img

@@ -96,15 +96,11 @@ export function CursorDot() {
     write();
     const raw = "onpointerrawupdate" in window ? "pointerrawupdate" : "pointermove";
     window.addEventListener(raw, onMove as EventListener, { passive: true });
-    window.addEventListener("pointermove", onMove as EventListener, { passive: true });
-    window.addEventListener("mousemove", onMove as EventListener, { passive: true });
     window.addEventListener("pointerdown", onMove as EventListener, { passive: true });
 
     return () => {
       document.documentElement.classList.remove("cursor-dot-active");
       window.removeEventListener(raw, onMove as EventListener);
-      window.removeEventListener("pointermove", onMove as EventListener);
-      window.removeEventListener("mousemove", onMove as EventListener);
       window.removeEventListener("pointerdown", onMove as EventListener);
       if (raf) cancelAnimationFrame(raf);
     };
@@ -113,8 +109,8 @@ export function CursorDot() {
   if (!enabled) return null;
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[9999] hidden md:block">
-      <div ref={ringRef} className="cursor-ring absolute left-0 top-0 h-8 w-8 rounded-full pointer-events-none" />
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[100] hidden md:block">
+      <div ref={ringRef} className="cursor-ring absolute left-0 top-0 h-8 w-8 rounded-full" />
     </div>
   );
 }

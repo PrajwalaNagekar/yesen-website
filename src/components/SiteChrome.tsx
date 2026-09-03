@@ -34,34 +34,34 @@ const FOOTER_LINKS: {
   heading: string;
   items: { label: string; to?: string; href?: string; hash?: string }[];
 }[] = [
-  {
-    heading: "Quick links",
-    items: [
-      { label: "FAQ", to: "/faq" },
-      { label: "Disclaimer", to: "/legal", hash: "disclaimer" },
-      { label: "Terms and Conditions", to: "/legal", hash: "terms" },
-      { label: "Policies", to: "/legal", hash: "policies" },
-    ],
-  },
-  {
-    heading: "Company",
-    items: [
-      { label: "About us", to: "/about" },
-      { label: "Products", to: "/products" },
-      { label: "Solutions", to: "/solutions" },
-      { label: "Projects", to: "/projects" },
-    ],
-  },
-  {
-    heading: "Connect",
-    items: [
-      { label: "Contact", to: "/contact" },
-      { label: "Get a quote", to: "/enquire" },
-      { label: "Global offices", to: "/contact", hash: "offices" },
-      { label: "Email us", href: "mailto:info@yesentechnologies.com" },
-    ],
-  },
-];
+    {
+      heading: "Quick links",
+      items: [
+        { label: "FAQ", to: "/faq" },
+        { label: "Disclaimer", to: "/legal", hash: "disclaimer" },
+        { label: "Terms and Conditions", to: "/legal", hash: "terms" },
+        { label: "Policies", to: "/legal", hash: "policies" },
+      ],
+    },
+    {
+      heading: "Company",
+      items: [
+        { label: "About us", to: "/about" },
+        { label: "Products", to: "/products" },
+        { label: "Solutions", to: "/solutions" },
+        { label: "Projects", to: "/projects" },
+      ],
+    },
+    {
+      heading: "Connect",
+      items: [
+        { label: "Contact", to: "/contact" },
+        { label: "Get a quote", to: "/enquire" },
+        { label: "Global offices", to: "/contact", hash: "offices" },
+        { label: "Email us", href: "mailto:info@yesentechnologies.com" },
+      ],
+    },
+  ];
 
 
 const OFFICES = [
@@ -116,50 +116,47 @@ export function SiteHeader() {
   return (
     <header
       style={{ willChange: "transform", backfaceVisibility: "hidden" }}
-      className={`fixed inset-x-0 top-0 z-50 transform-gpu transition-transform duration-300 ease-out ${
-        hidden ? "-translate-y-full" : "translate-y-0"
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transform-gpu transition-transform duration-300 ease-out ${hidden ? "-translate-y-full" : "translate-y-0"
+        }`}
     >
       <div
-        className={`transition-colors duration-300 ${
-          atTop ? "bg-transparent" : "border-b border-brand-navy/10 bg-white/70 backdrop-blur-xl"
-        }`}
+        className={`transition-colors duration-300 ${atTop ? "bg-transparent" : "border-b border-brand-navy/10 bg-white/70 backdrop-blur-xl"
+          }`}
       >
-          <div
-            className={`relative mx-auto flex w-full max-w-[100rem] items-center justify-between gap-6 px-6 transition-[padding] duration-300 sm:px-12 ${
-              atTop ? "py-7" : "py-4"
+        <div
+          className={`relative mx-auto flex w-full max-w-[100rem] items-center justify-between gap-6 px-6 transition-[padding] duration-300 sm:px-12 ${atTop ? "py-7" : "py-4"
             }`}
-          >
-            <Link to="/" aria-label="YESEN Technologies Pvt Ltd home" className="shrink-0">
-              <Logo className={`w-auto transition-[height] duration-300 ${atTop ? "h-12" : "h-10"}`} />
+        >
+          <Link to="/" aria-label="YESEN Technologies Pvt Ltd home" className="shrink-0">
+            <Logo className={`w-auto transition-[height] duration-300 ${atTop ? "h-12" : "h-10"}`} />
+          </Link>
+
+
+          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-10 md:flex" aria-label="Main">
+            {NAV.map((item) => {
+              const cls =
+                "relative py-1 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-brand-navy transition-colors duration-300 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-right after:scale-x-0 after:bg-brand-leaf after:transition-transform after:duration-500 hover:text-brand-forest hover:after:origin-left hover:after:scale-x-100";
+              return item.to ? (
+                <Link key={item.label} to={item.to} className={cls}>
+                  {item.label}
+                </Link>
+              ) : (
+                <span key={item.label} className={cls}>
+                  {item.label}
+                </span>
+              );
+            })}
+          </nav>
+
+          <div className="hidden shrink-0 md:block">
+            <Link to="/enquire" className="inline-flex h-11 items-center rounded-full border border-brand-navy/15 bg-white/70 px-6 font-mono text-[0.68rem] uppercase tracking-[0.22em] text-brand-navy shadow-[0_10px_30px_-18px_color-mix(in_oklab,var(--brand-navy)_70%,transparent)] backdrop-blur-md transition-colors hover:border-brand-leaf hover:text-brand-forest">
+              Get a quote
             </Link>
-
-
-            <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-10 md:flex" aria-label="Main">
-              {NAV.map((item) => {
-                const cls =
-                  "relative py-1 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-brand-navy transition-colors duration-300 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-right after:scale-x-0 after:bg-brand-leaf after:transition-transform after:duration-500 hover:text-brand-forest hover:after:origin-left hover:after:scale-x-100";
-                return item.to ? (
-                  <Link key={item.label} to={item.to} className={cls}>
-                    {item.label}
-                  </Link>
-                ) : (
-                  <span key={item.label} className={cls}>
-                    {item.label}
-                  </span>
-                );
-              })}
-            </nav>
-
-            <div className="hidden shrink-0 md:block">
-              <Link to="/enquire" className="inline-flex h-11 items-center rounded-full border border-brand-navy/15 bg-white/70 px-6 font-mono text-[0.68rem] uppercase tracking-[0.22em] text-brand-navy shadow-[0_10px_30px_-18px_color-mix(in_oklab,var(--brand-navy)_70%,transparent)] backdrop-blur-md transition-colors hover:border-brand-leaf hover:text-brand-forest">
-                Get a quote
-              </Link>
-            </div>
-
-            <MobileNav tone="dark" />
-
           </div>
+
+          <MobileNav tone="dark" />
+
+        </div>
 
       </div>
     </header>
@@ -270,12 +267,9 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-[100rem] flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-12">
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+        <div className="mx-auto flex w-full max-w-[100rem] items-center justify-center px-6 py-6 sm:px-12">
+          <p className="font-mono !text-[0.5rem] tracking-[0.1em] text-muted-foreground sm:!text-[0.55rem] sm:tracking-[0.12em] lg:!text-[0.7rem] lg:tracking-[0.14em]">
             © {new Date().getFullYear()} YESEN Technologies Pvt Ltd
-          </p>
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
-            Technology by Nature
           </p>
         </div>
       </div>

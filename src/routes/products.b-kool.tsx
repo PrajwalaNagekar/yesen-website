@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  ArrowRight,
   BadgeCheck,
   BatteryCharging,
   Bluetooth,
@@ -231,32 +230,6 @@ function BKoolPage() {
               ))}
             </div>
           </div>
-        </section>
-        {/* ------------------------------------------------------------- CTA */}
-        <section className="relative px-6 pb-20 pt-4 sm:px-12">
-          <Reveal className="mx-auto w-full max-w-[100rem]">
-            <div className="about-card about-cta relative isolate overflow-hidden text-center">
-              <p className="about-eyebrow">Next step</p>
-              <h2 className="display-xl mt-4 text-[clamp(1.8rem,3vw,2.6rem)]">
-                Interested in <span className="about-highlight">B-KOOL</span>?
-              </h2>
-              <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-brand-navy/65">
-                Talk to our engineering team about battery sizing, BMS telemetry integration, and fitment for your vessel.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  to="/enquire"
-                  search={{ product: "B-KOOL", type: "product" }}
-                  className="about-btn about-btn-primary"
-                >
-                  Enquire now <ArrowRight size={16} />
-                </Link>
-                <Link to="/products" hash="catalogue" className="about-btn about-btn-ghost">
-                  All products
-                </Link>
-              </div>
-            </div>
-          </Reveal>
         </section>
       </main>
 

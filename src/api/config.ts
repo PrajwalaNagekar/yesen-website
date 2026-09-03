@@ -23,4 +23,9 @@ export const API_ENDPOINTS = {
     LIST: "/solutions-csm",
     BY_ID: (id: string) => `/solutions-csm/${id}`,
   },
+  TESTIMONIALS: {
+    LIST: "/testimonials",
+    CREATE: "/testimonials",
+    BY_ID: (id: string) => `/testimonials/${id}`,
+  },
 } as const;

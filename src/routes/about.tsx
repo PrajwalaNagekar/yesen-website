@@ -299,7 +299,7 @@ function AboutPage() {
       const el = heroVideoRef.current;
       if (!el) return;
       el.muted = true;
-      void el.play().catch(() => {});
+      void el.play().catch(() => { });
     };
     start();
     const id = window.setTimeout(start, 600);
@@ -349,7 +349,7 @@ function AboutPage() {
                 onLoadedData={(event) => {
                   const el = event.currentTarget;
                   el.muted = true;
-                  void el.play().catch(() => {});
+                  void el.play().catch(() => { });
                 }}
               />
               <div className="about-hero-scrim" />
@@ -627,11 +627,10 @@ function AboutPage() {
                         key={`tab-${loc.name}`}
                         type="button"
                         onClick={() => setActiveLocation(i)}
-                        className={`rounded-full border px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.18em] transition-colors ${
-                          activeLocation === i
-                            ? "border-brand-forest/40 bg-brand-forest/10 text-brand-forest"
-                            : "border-brand-navy/12 bg-white/60 text-brand-navy/60 hover:text-brand-navy"
-                        }`}
+                        className={`rounded-full border px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-[0.18em] transition-colors ${activeLocation === i
+                          ? "border-brand-forest/40 bg-brand-forest/10 text-brand-forest"
+                          : "border-brand-navy/12 bg-white/60 text-brand-navy/60 hover:text-brand-navy"
+                          }`}
                       >
                         {loc.name}
                       </button>

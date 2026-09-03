@@ -123,11 +123,7 @@ export default function TechDeepDive() {
       <div className="td-head">
         <div className="td-eyebrow">The Technology</div>
         <h2 ref={titleRef} className="td-title">
-          {TITLE_WORDS.map((w, i) => (
-            <span key={`${w}-${i}`} className="td-word">
-              {GRADIENT_WORDS.has(w) ? <em>{w}</em> : w}{" "}
-            </span>
-          ))}
+          Engineered cell to cloud — not just charged and shipped.
         </h2>
         <p ref={subRef} className="td-sub">
           Every battery we ship is certified. Every vessel we fit is watched, live, from anywhere.
