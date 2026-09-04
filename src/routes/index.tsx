@@ -1897,7 +1897,7 @@ function RetrofitShowcase() {
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
                 aria-label={v.name}
-                className="cine-panel cine-grain window-square group relative h-full overflow-hidden bg-brand-ink text-left transition-[flex-grow] duration-[1100ms] ease-[cubic-bezier(0.33,1,0.68,1)] will-change-[flex-grow]"
+                className="cine-panel cine-grain window-square relative aspect-[3/4] w-[88%] shrink-0 snap-start overflow-hidden bg-brand-ink sm:w-[38%]"
                 style={
                   {
                     flexGrow: open ? 7.5 : 1,
@@ -1961,14 +1961,16 @@ function RetrofitShowcase() {
         </div>
 
         {/* Mobile / tablet — snap rail, no visible scrollbar */}
+        {/* Mobile / tablet — snap rail, no visible scrollbar */}
         <div className="no-scrollbar mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:hidden">
           {RETROFIT_VESSELS.map((v) => (
             <figure
               key={v.name}
-              className="cine-panel cine-grain window-square relative aspect-[3/4] w-[62%] shrink-0 snap-start overflow-hidden bg-brand-ink sm:w-[38%]"
-              style={{ "--cine": 1 } as React.CSSProperties}
+            className="cine-panel cine-grain window-square relative aspect-[3/4] w-[calc(100vw-3rem)] shrink-0 snap-start overflow-hidden bg-brand-ink sm:w-[38%]"
+           
             >
-              <img decoding="async"
+              <img
+                decoding="async"
                 src={v.image}
                 alt={v.name}
                 loading="lazy"
@@ -1976,6 +1978,7 @@ function RetrofitShowcase() {
               />
               <div className="cine-grade" />
               <div className="cine-vignette" />
+
               <figcaption className="absolute inset-x-0 bottom-0 z-10 p-4 font-display text-base text-brand-ivory">
                 {v.name}
               </figcaption>
