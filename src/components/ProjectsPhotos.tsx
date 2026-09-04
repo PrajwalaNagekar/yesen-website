@@ -2,7 +2,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, Fragment } from "
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
-import { fetchProjects, isValidProjectId, type ProjectRecord } from "@/api/projects";
+import {
+  fetchProjects,
+  isValidProjectId,
+  type ProjectRecord,
+  type UiProjectStatus,
+} from "@/api/projects";
 import pp1 from "@/assets/proj-photo-1.jpg";
 import pp2 from "@/assets/proj-photo-2.jpg";
 import pp3 from "@/assets/proj-photo-3.jpg";
@@ -15,14 +20,22 @@ import pp9 from "@/assets/proj-photo-9.jpg";
 
 const TITLE_WORDS = ["From", "pilot", "to", "fleet", "—", "in", "our", "own", "photos."];
 
-const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "ongoing", label: "Ongoing" },
-  { key: "done", label: "Completed" },
-] as const;
+/** Display order for API-backed status filters */
+const STATUS_FILTER_ORDER: UiProjectStatus[] = ["progress", "live", "complete"];
 
-type FilterKey = (typeof FILTERS)[number]["key"];
-type Status = Exclude<FilterKey, "all">;
+const STATUS_LABELS: Record<UiProjectStatus, string> = {
+  progress: "In progress",
+  live: "Live",
+  complete: "Complete",
+};
+
+const BADGE_CLASS: Record<UiProjectStatus, string> = {
+  progress: "ongoing",
+  live: "live",
+  complete: "done",
+};
+
+type FilterKey = "all" | UiProjectStatus;
 
 function progressPct() {
   const awarded = new Date("2025-11-13").getTime();
@@ -63,6 +76,36 @@ export default function ProjectsPhotos() {
     };
   }, []);
 
+  /* Build filters from statuses present in API data (fallback when empty) */
+  const filters = useMemo(() => {
+    const labels = new Map<UiProjectStatus, string>();
+    for (const p of apiProjects) {
+      if (!labels.has(p.status)) {
+        labels.set(p.status, p.statusLabel || STATUS_LABELS[p.status]);
+      }
+    }
+
+    const statusFilters =
+      labels.size > 0
+        ? STATUS_FILTER_ORDER.filter((key) => labels.has(key)).map((key) => ({
+            key,
+            label: labels.get(key)!,
+          }))
+        : [
+            { key: "progress" as const, label: STATUS_LABELS.progress },
+            { key: "complete" as const, label: STATUS_LABELS.complete },
+          ];
+
+    return [{ key: "all" as const, label: "All" }, ...statusFilters];
+  }, [apiProjects]);
+
+  /* Reset filter if current selection disappears after data loads */
+  useEffect(() => {
+    if (filter !== "all" && !filters.some((f) => f.key === filter)) {
+      setFilter("all");
+    }
+  }, [filters, filter]);
+
   /* filter pill indicator */
   useEffect(() => {
     const move = () => {
@@ -75,7 +118,7 @@ export default function ProjectsPhotos() {
     move();
     window.addEventListener("resize", move);
     return () => window.removeEventListener("resize", move);
-  }, [filter]);
+  }, [filter, filters]);
 
   /* title blur-to-focus reveal */
   useEffect(() => {
@@ -136,11 +179,13 @@ export default function ProjectsPhotos() {
     return () => io.disconnect();
   }, [filter, apiProjects]);
 
-  const staticSlides = useMemo<Array<{ id: string; status: Status; title: string; node: ReactNode }>>(
+  const staticSlides = useMemo<
+    Array<{ id: string; status: UiProjectStatus; title: string; node: ReactNode }>
+  >(
     () => [
       {
         id: "patratu",
-        status: "ongoing",
+        status: "progress",
         title: "Tourism Solar Houseboats",
         node: (
           <article className="pj-card">
@@ -149,9 +194,9 @@ export default function ProjectsPhotos() {
             <div className="pj-shine" />
             <div className="pj-thumb br" style={{ backgroundImage: `url(${pp2})` }} />
             <div className="pj-content">
-              <span className="pj-badge ongoing">
+              <span className={`pj-badge ${BADGE_CLASS.progress}`}>
                 <i />
-                Ongoing
+                {STATUS_LABELS.progress}
               </span>
               <h3>Tourism Solar Houseboats</h3>
               <div className="pj-loc">India</div>
@@ -159,22 +204,13 @@ export default function ProjectsPhotos() {
                 2BHK &amp; 4BHK solar houseboats plus shore infrastructure — ticketing counter,
                 jetty, waiting room.
               </p>
-              <div className="pj-progress">
-                <div className="pj-progress-meta">
-                  <span>Awarded Nov 2025</span>
-                  <span>{pct}% to completion</span>
-                </div>
-                <div className="pj-progress-track">
-                  <div className="pj-progress-fill" style={{ ["--pct" as string]: `${pct}%` }} />
-                </div>
-              </div>
             </div>
           </article>
         ),
       },
       {
         id: "cial-ferry",
-        status: "done",
+        status: "complete",
         title: "CIAL Solar-Electric Ferry",
         node: (
           <article className="pj-card">
@@ -182,9 +218,9 @@ export default function ProjectsPhotos() {
             <div className="pj-scrim" />
             <div className="pj-shine" />
             <div className="pj-content">
-              <span className="pj-badge done">
+              <span className={`pj-badge ${BADGE_CLASS.complete}`}>
                 <i />
-                Completed
+                {STATUS_LABELS.complete}
               </span>
               <h3>CIAL Solar-Electric Ferry</h3>
               <div className="pj-loc">India</div>
@@ -195,7 +231,7 @@ export default function ProjectsPhotos() {
       },
       {
         id: "rancare",
-        status: "done",
+        status: "complete",
         title: "Rancare Commercial Centre",
         node: (
           <article className="pj-card">
@@ -205,9 +241,9 @@ export default function ProjectsPhotos() {
             <div className="pj-value-tag">USD 188,471</div>
             <div className="pj-thumb tl" style={{ backgroundImage: `url(${pp5})` }} />
             <div className="pj-content">
-              <span className="pj-badge done">
+              <span className={`pj-badge ${BADGE_CLASS.complete}`}>
                 <i />
-                Completed
+                {STATUS_LABELS.complete}
               </span>
               <h3>Rancare Commercial Centre</h3>
               <div className="pj-loc">USA</div>
@@ -218,7 +254,7 @@ export default function ProjectsPhotos() {
       },
       {
         id: "cial-boat",
-        status: "done",
+        status: "complete",
         title: "Electric Boat for CIAL",
         node: (
           <article className="pj-card">
@@ -227,9 +263,9 @@ export default function ProjectsPhotos() {
             <div className="pj-shine" />
             <div className="pj-thumb br" style={{ backgroundImage: `url(${pp7})` }} />
             <div className="pj-content">
-              <span className="pj-badge done">
+              <span className={`pj-badge ${BADGE_CLASS.complete}`}>
                 <i />
-                Completed
+                {STATUS_LABELS.complete}
               </span>
               <h3>Electric Boat for CIAL</h3>
               <div className="pj-loc">India</div>
@@ -240,7 +276,7 @@ export default function ProjectsPhotos() {
       },
       {
         id: "residential",
-        status: "done",
+        status: "complete",
         title: "Residential Solar Installations",
         node: (
           <article className="pj-card">
@@ -249,9 +285,9 @@ export default function ProjectsPhotos() {
             <div className="pj-shine" />
             <div className="pj-thumb tl" style={{ backgroundImage: `url(${pp9})` }} />
             <div className="pj-content">
-              <span className="pj-badge done">
+              <span className={`pj-badge ${BADGE_CLASS.complete}`}>
                 <i />
-                Completed
+                {STATUS_LABELS.complete}
               </span>
               <h3>Residential Solar Installations</h3>
               <div className="pj-loc">USA &amp; India</div>
@@ -261,40 +297,38 @@ export default function ProjectsPhotos() {
         ),
       },
     ],
-    [pct],
+    [],
   );
 
-  const slides = useMemo<Array<{ id: string; status: Status; node: ReactNode }>>(() => {
+  const slides = useMemo<Array<{ id: string; status: UiProjectStatus; node: ReactNode }>>(() => {
     const fallbackCovers = [pp1, pp3, pp4, pp6, pp8];
 
     const apiSlides = apiProjects.map((p, idx) => {
-      const isOngoing = p.status === "progress";
-      const isLive = p.status === "live";
-      const status: Status = isOngoing ? "ongoing" : "done";
-      const badgeClass = isOngoing ? "ongoing" : isLive ? "live" : "done";
-      const badgeLabel = isOngoing ? "Ongoing" : isLive ? "Live" : "Completed";
+      const isInProgress = p.status === "progress";
       const coverUrl = p.cover || fallbackCovers[idx % fallbackCovers.length];
 
       return {
         id: p.id || `api-proj-${idx}`,
-        status,
+        status: p.status,
         node: (
           <article className="pj-card" key={p.id || idx}>
             <div className="pj-img" style={{ backgroundImage: `url(${coverUrl})` }} />
             <div className="pj-scrim" />
             <div className="pj-shine" />
             <div className="pj-content">
-              <span className={`pj-badge ${badgeClass}`}>
+              <span className={`pj-badge ${BADGE_CLASS[p.status]}`}>
                 <i />
-                {badgeLabel}
+                {p.statusLabel || STATUS_LABELS[p.status]}
               </span>
               <h3>{p.title}</h3>
               <div className="pj-loc">{p.loc || p.country || "India"}</div>
               <p>{p.summary || p.body || ""}</p>
-              {isOngoing && (
+              {isInProgress && (
                 <div className="pj-progress">
                   <div className="pj-progress-meta">
-                    <span>{p.timeline && p.timeline !== "—" ? `Awarded ${p.timeline}` : "In progress"}</span>
+                    <span>
+                      {p.timeline && p.timeline !== "—" ? `Awarded ${p.timeline}` : "In progress"}
+                    </span>
                     <span>{pct}% to completion</span>
                   </div>
                   <div className="pj-progress-track">
@@ -320,7 +354,9 @@ export default function ProjectsPhotos() {
     if (!apiSlides.length) return staticSlides;
 
     const apiTitles = new Set(apiProjects.map((p) => p.title.trim().toLowerCase()));
-    const extraStatic = staticSlides.filter((slide) => !apiTitles.has(slide.title.trim().toLowerCase()));
+    const extraStatic = staticSlides.filter(
+      (slide) => !apiTitles.has(slide.title.trim().toLowerCase()),
+    );
 
     return [...apiSlides, ...extraStatic];
   }, [apiProjects, staticSlides, pct]);
@@ -354,7 +390,7 @@ export default function ProjectsPhotos() {
           style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
           aria-hidden
         />
-        {FILTERS.map((f) => (
+        {filters.map((f) => (
           <button
             key={f.key}
             type="button"

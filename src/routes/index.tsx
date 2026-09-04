@@ -781,10 +781,14 @@ const HomeHeader = React.memo(function HomeHeader() {
           className={`relative mx-auto grid w-full max-w-[100rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 transition-[padding] duration-700 sm:flex sm:justify-between sm:gap-6 sm:px-12 ${atTop ? "py-4 sm:py-7" : "py-3 sm:py-4"
             }`}
         >
-
-          <Link to="/" aria-label="YESEN Technologies Pvt Ltd home" className="min-w-0 shrink-0">
+          <Link
+            to="/"
+            aria-label="YESEN Technologies Pvt Ltd home"
+            className="min-w-0 shrink-0 bg-transparent"
+          >
             <Logo
-              className={`w-auto max-w-[58vw] transition-all duration-700 ${atTop ? "h-9 sm:h-12" : "h-8 sm:h-10"}`}
+              className={`w-auto max-w-[58vw] bg-transparent transition-all duration-700 ${atTop ? "h-9 sm:h-12" : "h-8 sm:h-10"
+                }`}
               variant={atTop ? "light" : "dark"}
             />
           </Link>
@@ -1675,7 +1679,7 @@ function Home() {
             <div className="col-span-3 md:col-span-1" data-reveal="left">
               <Logo className="h-14 w-auto" />
               <p className="mt-4 text-[0.78rem] font-medium tracking-[0.02em] text-brand-forest">
-                Erstwhile YESEN SUSTAIN Pvt Ltd
+                Erstwhile YESEN Technologies Pvt Ltd
               </p>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                 Green technologies that make economic sense — engineered for smart cities and the
