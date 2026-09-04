@@ -169,15 +169,13 @@ function OfficeRow({
       type="button"
       onClick={onSelect}
       aria-pressed={active}
-      className={`group w-full border-b border-brand-navy/12 px-1 py-5 text-left transition-colors duration-500 ${
-        active ? "bg-brand-navy/[0.04]" : "hover:bg-brand-navy/[0.02]"
-      }`}
+      className={`group w-full border-b border-brand-navy/12 px-1 py-5 text-left transition-colors duration-500 ${active ? "bg-brand-navy/[0.04]" : "hover:bg-brand-navy/[0.02]"
+        }`}
     >
       <span className="flex items-start gap-4">
         <span
-          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full transition-colors duration-500 ${
-            active ? "bg-brand-leaf" : "bg-brand-navy/25"
-          }`}
+          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full transition-colors duration-500 ${active ? "bg-brand-leaf" : "bg-brand-navy/25"
+            }`}
         />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-3">
@@ -192,38 +190,48 @@ function OfficeRow({
             </span>
           </span>
 
-          <motion.span
+          <motion.div
             initial={false}
-            animate={{ height: active ? "auto" : 0, opacity: active ? 1 : 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="block overflow-hidden"
+            animate={{
+              gridTemplateRows: active ? "1fr" : "0fr",
+              opacity: active ? 1 : 0,
+            }}
+            transition={{
+              duration: 0.5,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="grid overflow-hidden"
           >
-            <span className="mt-3 block space-y-1 text-[0.85rem] leading-relaxed text-brand-navy/70">
-              {office.address.map((line) => (
-                <span key={line} className="block">
-                  {line}
-                </span>
-              ))}
-              <span className="block pt-2">
-                <a
-                  href={`tel:${office.phone.replace(/\s/g, "")}`}
-                  className="underline decoration-brand-leaf underline-offset-4"
-                >
-                  {office.phone}
-                </a>
-              </span>
-              {office.email ? (
-                <span className="block">
+            <div className="min-h-0">
+              <div className="mt-3 space-y-1 text-[0.85rem] leading-relaxed text-brand-navy/70">
+                {office.address.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+
+                <span className="block pt-2">
                   <a
-                    href={`mailto:${office.email}`}
+                    href={`tel:${office.phone.replace(/\s/g, "")}`}
                     className="underline decoration-brand-leaf underline-offset-4"
                   >
-                    {office.email}
+                    {office.phone}
                   </a>
                 </span>
-              ) : null}
-            </span>
-          </motion.span>
+
+                {office.email ? (
+                  <span className="block">
+                    <a
+                      href={`mailto:${office.email}`}
+                      className="underline decoration-brand-leaf underline-offset-4"
+                    >
+                      {office.email}
+                    </a>
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </motion.div>
         </span>
       </span>
     </button>
@@ -240,14 +248,14 @@ function ContactPage() {
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const parsed = schema.safeParse(data);
-    
+
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form");
       return;
     }
-    
+
     setSending(true);
-    
+
     try {
       // Prepare payload for API
       const payload = {
@@ -263,7 +271,7 @@ function ContactPage() {
       };
 
       await submitContactEnquiry(payload);
-      
+
       form.reset();
       toast.success("Thank you — your message is on its way to our team.");
     } catch (error: any) {

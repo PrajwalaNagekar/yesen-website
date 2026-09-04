@@ -9577,11 +9577,13 @@ canvas {
 
 .tw-head-content {
   min-width: 0;
+  flex: 1;
 }
 
 .tw-add-slot {
   margin-left: auto;
   flex-shrink: 0;
+  padding-top: 0.25rem;
 }
 
 /* Mobile */
