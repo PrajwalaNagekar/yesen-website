@@ -200,7 +200,7 @@ function EnquirePage() {
           setProductsList(res);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     fetchSolutions()
       .then((res) => {
@@ -208,7 +208,7 @@ function EnquirePage() {
           setSolutionsList(res);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const mapVesselType = (v: string | null): string | undefined => {
@@ -295,9 +295,9 @@ function EnquirePage() {
       setInterest("solution");
       const matched = solutionOptions.find(
         (s) =>
-          s.id.toLowerCase() === targetSolution.toLowerCase() ||
+          // s.id.toLowerCase() === targetSolution.toLowerCase() ||
           s.name.toLowerCase() === targetSolution.toLowerCase() ||
-          s.display.toLowerCase().includes(targetSolution.toLowerCase()) ||
+          // s.display.toLowerCase().includes(targetSolution.toLowerCase()) ||
           targetSolution.toLowerCase().includes(s.name.toLowerCase())
       );
       if (matched) {
@@ -310,9 +310,9 @@ function EnquirePage() {
       if (targetChoice) {
         const matched = productOptions.find(
           (p) =>
-            p.id.toLowerCase() === targetChoice.toLowerCase() ||
-            p.name.toLowerCase() === targetChoice.toLowerCase() ||
-            p.display.toLowerCase().includes(targetChoice.toLowerCase())
+            // p.id.toLowerCase() === targetChoice.toLowerCase() ||
+            p.name.toLowerCase() === targetChoice.toLowerCase()
+          // p.display.toLowerCase().includes(targetChoice.toLowerCase())
         );
         setChoice(matched ? matched.id : targetChoice);
       }
@@ -321,9 +321,9 @@ function EnquirePage() {
       if (targetChoice) {
         const matched = solutionOptions.find(
           (s) =>
-            s.id.toLowerCase() === targetChoice.toLowerCase() ||
-            s.name.toLowerCase() === targetChoice.toLowerCase() ||
-            s.display.toLowerCase().includes(targetChoice.toLowerCase())
+            // s.id.toLowerCase() === targetChoice.toLowerCase() ||
+            s.name.toLowerCase() === targetChoice.toLowerCase()
+          // s.display.toLowerCase().includes(targetChoice.toLowerCase())
         );
         setChoice(matched ? matched.id : targetChoice);
       }
@@ -356,20 +356,20 @@ function EnquirePage() {
   }, [interest, choice, productOptions, solutionOptions]);
 
   const selectedDisplay = useMemo(() => {
+    if (!choice) return "";
+
     if (interest === "product") {
-      const found = productOptions.find(
-        (p) => p.id === choice || p.name === choice || p.display === choice
-      );
-      return found ? found.name : choice;
+      const product = productsList.find((p) => p._id === choice);
+      return product?.name || choice;
     }
+
     if (interest === "solution") {
-      const found = solutionOptions.find(
-        (s) => s.id === choice || s.name === choice || s.display === choice
-      );
-      return found ? found.name : choice;
+      const solution = solutionsList.find((s) => s._id === choice);
+      return solution?.name || choice;
     }
+
     return "";
-  }, [interest, choice, productOptions, solutionOptions]);
+  }, [interest, choice, productsList, solutionsList]);
 
 
   return (
@@ -800,13 +800,11 @@ function EnquirePage() {
                 <p className="mt-4 font-display text-[1.35rem] leading-snug text-brand-navy">
                   {interest === "general"
                     ? "General enquiry"
-                    : choice
-                      ? choice.split(" — ")[0]
-                      : interest
-                        ? interest === "product"
-                          ? "Choose a product"
-                          : "Choose a solution"
-                        : "Nothing selected yet"}
+                    : selectedDisplay
+                      ? selectedDisplay
+                      : interest === "product"
+                        ? "Choose a product"
+                        : "Choose a solution"}
                 </p>
                 <ul className="mt-5 space-y-2.5 text-[0.84rem] text-brand-navy/60">
                   {[

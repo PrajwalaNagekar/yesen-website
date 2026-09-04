@@ -479,7 +479,7 @@ function AboutPage() {
                   variants={rise}
                   initial="hidden"
                   whileInView="show"
-                  viewport={{ once: true, amount: 0.4 }}
+                  viewport={{ once: true, amount: 0.4 }}  
                   transition={{ delay: i * 0.12 }}
                   className="uc-fea-panel"
                 >

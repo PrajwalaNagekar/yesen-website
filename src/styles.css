@@ -8141,6 +8141,23 @@ html.perf-lite .about-hero-gl {
   }
 }
 
+@media (max-width: 768px) {
+  .uc-story-collage {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+
+  .uc-tile-a,
+  .uc-tile-b,
+  .uc-tile-c,
+  .uc-tile-d,
+  .uc-tile-e {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
+
 /* ------------------------------------------------------------ our story */
 .uc-story {
   display: grid;
@@ -8250,6 +8267,15 @@ html.perf-lite .about-hero-gl {
 
 .uc-mask.is-in .uc-mask-inner {
   transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .uc-story-body p {
+    text-align: justify;
+    text-justify: inter-word;
+    letter-spacing: -0.02em;
+    word-spacing: -0.03em;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -8426,6 +8452,26 @@ html.perf-lite .about-hero-gl {
   font-size: 0.98rem;
   line-height: 1.9;
   color: color-mix(in oklab, var(--brand-navy) 70%, transparent);
+}
+
+
+@media (max-width: 768px) {
+  .uc-story-collage {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem !important;
+  }
+
+  .uc-tile-a,
+  .uc-tile-b,
+  .uc-tile-c,
+  .uc-tile-d,
+  .uc-tile-e {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
 }
 
 /* --------------------------------------------------- big stacked heading */
@@ -9226,6 +9272,14 @@ canvas {
   .manifesto-fab-icon {
     width: 1.5rem;
     height: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .uc-hero-lede {
+    text-align: justify;
+    text-align-last: left;
+    letter-spacing: -0.02em;
   }
 }
 
